@@ -1,0 +1,180 @@
+=head2 Errors
+
+=over 4
+
+=item * empty =headn
+
+A heading (C<=head1> or C<=head2>) without any text? That ain't no
+heading!
+
+=item * =over on line I<N> without closing =back
+
+The C<=over> command does not have a corresponding C<=back> before the
+next heading (C<=head1> or C<=head2>) or the end of the file.
+
+=item * =item without previous =over
+
+=item * =back without previous =over
+
+An C<=item> or C<=back> command has been found outside a
+C<=over>/C<=back> block.
+
+=item * No argument for =begin
+
+A C<=begin> command was found that is not followed by the formatter
+specification.
+
+=item * =end without =begin
+
+A standalone C<=end> command was found.
+
+=item * Nested =begin's
+
+There were at least two consecutive C<=begin> commands without
+the corresponding C<=end>. Only one C<=begin> may be active at
+a time.
+
+=item * =for without formatter specification
+
+There is no specification of the formatter after the C<=for> command.
+
+=item * unresolved internal link I<NAME>
+
+The given link to I<NAME> does not have a matching node in the current
+POD. This also happened when a single word node name is not enclosed in
+C<"">.
+
+=item * Unknown command "I<CMD>"
+
+An invalid POD command has been found. Valid are C<=head1>, C<=head2>,
+C<=head3>, C<=head4>, C<=over>, C<=item>, C<=back>, C<=begin>, C<=end>,
+C<=for>, C<=pod>, C<=cut>
+
+=item * Unknown interior-sequence "I<SEQ>"
+
+An invalid markup command has been encountered. Valid are:
+C<BE<lt>E<gt>>, C<CE<lt>E<gt>>, C<EE<lt>E<gt>>, C<FE<lt>E<gt>>,
+C<IE<lt>E<gt>>, C<LE<lt>E<gt>>, C<SE<lt>E<gt>>, C<XE<lt>E<gt>>,
+C<ZE<lt>E<gt>>
+
+=item * nested commands I<CMD>E<lt>...I<CMD>E<lt>...E<gt>...E<gt>
+
+Two nested identical markup commands have been found. Generally this
+does not make sense.
+
+=item * garbled entity I<STRING>
+
+The I<STRING> found cannot be interpreted as a character entity.
+
+=item * Entity number out of range
+
+An entity specified by number (dec, hex, oct) is out of range (1-255).
+
+=item * malformed link LE<lt>E<gt>
+
+The link found cannot be parsed because it does not conform to the
+syntax described in L<perlpod>.
+
+=item * nonempty ZE<lt>E<gt>
+
+The C<ZE<lt>E<gt>> sequence is supposed to be empty.
+
+=item * empty XE<lt>E<gt>
+
+The index entry specified contains nothing but whitespace.
+
+=item * Spurious text after =pod / =cut
+
+The commands C<=pod> and C<=cut> do not take any arguments.
+
+=item * Spurious character(s) after =back
+
+The C<=back> command does not take any arguments.
+
+=back
+
+=head2 Warnings
+
+These may not necessarily cause trouble, but indicate mediocre style.
+
+=over 4
+
+=item * multiple occurrence of link target I<name>
+
+The POD file has some C<=item> and/or C<=head> commands that have
+the same text. Potential hyperlinks to such a text cannot be unique then.
+This warning is printed only with warning level greater than one.
+
+=item * line containing nothing but whitespace in paragraph
+
+There is some whitespace on a seemingly empty line. POD is very sensitive
+to such things, so this is flagged. B<vi> users switch on the B<list>
+option to avoid this problem.
+
+=begin _disabled_
+
+=item * file does not start with =head
+
+The file starts with a different POD directive than head.
+This is most probably something you do not want.
+
+=end _disabled_
+
+=item * previous =item has no contents
+
+There is a list C<=item> right above the flagged line that has no
+text contents. You probably want to delete empty items.
+
+=item * preceding non-item paragraph(s)
+
+A list introduced by C<=over> starts with a text or verbatim paragraph,
+but continues with C<=item>s. Move the non-item paragraph out of the
+C<=over>/C<=back> block.
+
+=item * =item type mismatch (I<one> vs. I<two>)
+
+A list started with e.g. a bullet-like C<=item> and continued with a
+numbered one. This is obviously inconsistent. For most translators the
+type of the I<first> C<=item> determines the type of the list.
+
+=item * I<N> unescaped C<E<lt>E<gt>> in paragraph
+
+Angle brackets not written as C<E<lt>ltE<gt>> and C<E<lt>gtE<gt>>
+can potentially cause errors as they could be misinterpreted as
+markup commands. This is only printed when the -warnings level is
+greater than 1.
+
+=item * Unknown entity
+
+A character entity was found that does not belong to the standard
+ISO set or the POD specials C<verbar> and C<sol>.
+
+=item * No items in =over
+
+The list opened with C<=over> does not contain any items.
+
+=item * No argument for =item
+
+C<=item> without any parameters is deprecated. It should either be followed
+by C<*> to indicate an unordered list, by a number (optionally followed
+by a dot) to indicate an ordered (numbered) list or simple text for a
+definition list.
+
+=item * empty section in previous paragraph
+
+The previous section (introduced by a C<=head> command) does not contain
+any text. This usually indicates that something is missing. Note: A
+C<=head1> followed immediately by C<=head2> does not trigger this warning.
+
+=item * Verbatim paragraph in NAME section
+
+The NAME section (C<=head1 NAME>) should consist of a single paragraph
+with the script/module name, followed by a dash `-' and a very short
+description of what the thing is good for.
+
+=item * =headI<n> without preceding higher level
+
+For example if there is a C<=head2> in the POD file prior to a
+C<=head1>.
+
+=back
