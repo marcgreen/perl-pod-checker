@@ -340,10 +340,6 @@ B<podchecker> (the script). This allows users of B<Pod::Checker> to
 control completely the output behavior. Users of B<podchecker> (the script)
 get the well-known behavior.
 
-B<Note:> This module no longer uses B<poderror> to print errors and warnings 
-as of PodChecker-1.46. This is due to the port to B<Pod::Simple>, which
-uses its own B<whine> method to output errors.
-
 =cut
 
 #############################################################################
@@ -405,35 +401,36 @@ POD formatters.
 
 =cut
 
-## sub new {
-##     my $this = shift;
-##     my $class = ref($this) || $this;
-##     my %params = @_;
-##     my $self = {%params};
-##     bless $self, $class;
-##     $self->initialize();
-##     return $self;
-## }
+sub new {
+    my $new = shift->SUPER::new(@_);
+    $new->{'output_fh'} ||= *STDERR{IO};
 
-sub initialize {
-    my $self = shift;
-    ## Initialize number of errors, and setup an error function to
-    ## increment this number and then print to the designated output.
-    $self->{_NUM_ERRORS} = 0;
-    $self->{_NUM_WARNINGS} = 0;
-    $self->{-quiet} ||= 0;
-    # set the error handling subroutine
-    $self->errorsub($self->{-quiet} ? sub { 1; } : 'poderror');
-    $self->{_commands} = 0; # total number of POD commands encountered
-    $self->{_list_stack} = []; # stack for nested lists
-    $self->{_have_begin} = ''; # stores =begin
-    $self->{_links} = []; # stack for internal hyperlinks
-    $self->{_nodes} = []; # stack for =head/=item nodes
-    $self->{_index} = []; # text in X<>
-    # print warnings?
-    $self->{-warnings} = 1 unless(defined $self->{-warnings});
-    $self->{_current_head1} = ''; # the current =head1 block
-    $self->parseopts(-process_cut_cmd => 1, -warnings => $self->{-warnings});
+    # Set options
+    $new->{'-warnings'} = defined $_{'-warnings'} ?
+                                  $_{'-warnings'} : 1; # default on
+    $new->{'-quiet'} = $_{'-quiet'} || 0; # default off
+
+    # Initialize number of errors/warnings
+    $new->{'_NUM_ERRORS'} = 0;
+    $new->{'_NUM_WARNINGS'} = 0;
+
+    # TODO do I need all of these?
+    $new->{_list_stack} = []; # stack for nested lists
+    $new->{_have_begin} = ''; # stores =begin
+    $new->{_links} = []; # stack for internal hyperlinks
+    $new->{_nodes} = []; # stack for =head/=item nodes
+    $new->{_index} = []; # text in X<>
+
+    # 'current' also means 'most recent' in the follow comments
+    $new->{'_thispara'} = ''; # current POD paragraph
+    $new->{'_line'} = 0; # current line number
+    $new->{'_head_num'} = 0; # current =head level
+                             # set to 0 to make logic easier down the road
+    $new->{'_cmds_since_head'} = 0; # num of POD directives since prev. =headN
+
+    $new->cut_handler( &handle_cut ); # warn if text after =cut
+
+    return $new;
 }
 
 ##################################
@@ -456,7 +453,8 @@ The line number the error occurred in.
 
   -file
 
-The file (name) the error occurred in.
+The file (name) the error occurred in. Defaults to the value of
+C<Pod::Simple->source_filename>.
 
   -severity
 
@@ -470,24 +468,25 @@ sub poderror {
     my %opts = (ref $_[0]) ? %{shift()} : ();
 
     ## Retrieve options
-    chomp( my $msg  = ($opts{-msg} || '')."@_" );
-    my $line = (exists $opts{-line}) ? " at line $opts{-line}" : '';
-    my $file = (exists $opts{-file}) ? " in file $opts{-file}" : '';
-    unless (exists $opts{-severity}) {
+    chomp( my $msg  = ($opts{'-msg'} || '')."@_" );
+    my $line = (exists $opts{'-line'}) ? " at line $opts{'-line'}" : '';
+    my $file = ' in file ' . ((exists $opts{'-file'}) ?
+                             $opts{'-file'} : $self->source_filename);
+    unless (exists $opts{'-severity'}) {
        ## See if can find severity in message prefix
-       $opts{-severity} = $1  if ( $msg =~ s/^\**\s*([A-Z]{3,}):\s+// );
+       $opts{'-severity'} = $1  if ( $msg =~ s/^\**\s*([A-Z]{3,}):\s+// );
     }
-    my $severity = (exists $opts{-severity}) ? "*** $opts{-severity}: " : '';
+    my $severity = (exists $opts{'-severity'}) ? "*** $opts{-severity}: " : '';
 
     ## Increment error count and print message "
-    ++($self->{_NUM_ERRORS})
-        if(!%opts || ($opts{-severity} && $opts{-severity} eq 'ERROR'));
-    ++($self->{_NUM_WARNINGS})
-        if(!%opts || ($opts{-severity} && $opts{-severity} eq 'WARNING'));
-    unless($self->{-quiet}) {
-      my $out_fh = $self->output_handle() || \*STDERR;
+    ++($self->{'_NUM_ERRORS'})
+        if(!%opts || ($opts{-severity} && $opts{'-severity'} eq 'ERROR'));
+    ++($self->{'_NUM_WARNINGS'})
+        if(!%opts || ($opts{-severity} && $opts{'-severity'} eq 'WARNING'));
+    unless($self->{'-quiet'}) {
+      my $out_fh = $self->{'output_fh'} || \*STDERR;
       print $out_fh ($severity, $msg, $line, $file, "\n")
-        if($self->{-warnings} || !%opts || $opts{-severity} ne 'WARNING');
+        if($self->{'-warnings'} || !%opts || $opts{'-severity'} ne 'WARNING');
     }
 }
 
@@ -500,7 +499,7 @@ Set (if argument specified) and retrieve the number of errors found.
 =cut
 
 sub num_errors {
-   return (@_ > 1) ? ($_[0]->{_NUM_ERRORS} = $_[1]) : $_[0]->{_NUM_ERRORS};
+   return (@_ > 1) ? ($_[0]->{'_NUM_ERRORS'} = $_[1]) : $_[0]->{'_NUM_ERRORS'};
 }
 
 ##################################
@@ -512,7 +511,8 @@ Set (if argument specified) and retrieve the number of warnings found.
 =cut
 
 sub num_warnings {
-   return (@_ > 1) ? ($_[0]->{_NUM_WARNINGS} = $_[1]) : $_[0]->{_NUM_WARNINGS};
+   return (@_ > 1) ? ($_[0]->{'_NUM_WARNINGS'} = $_[1]) :
+                      $_[0]->{'_NUM_WARNINGS'};
 }
 
 ##################################
@@ -526,7 +526,7 @@ found in the C<=head1 NAME> section.
 
 sub name {
     return (@_ > 1 && $_[1]) ?
-        ($_[0]->{-name} = $_[1]) : $_[0]->{-name};
+        ($_[0]->{'_pod_name'} = $_[1]) : $_[0]->{'_pod_name'};
 }
 
 ##################################
@@ -546,12 +546,12 @@ sub node {
         $text =~ s/\s+$//s; # strip trailing whitespace
         $text =~ s/\s+/ /gs; # collapse whitespace
         # add node, order important!
-        push(@{$self->{_nodes}}, $text);
+        push(@{$self->{'_nodes'}}, $text);
         # keep also a uniqueness counter
-        $self->{_unique_nodes}->{$text}++ if($text !~ /^\s*$/s);
+        $self->{'_unique_nodes'}->{$text}++ if($text !~ /^\s*$/s);
         return $text;
     }
-    @{$self->{_nodes}};
+    @{$self->{'_nodes'}};
 }
 
 ##################################
@@ -571,12 +571,12 @@ sub idx {
         $text =~ s/\s+$//s; # strip trailing whitespace
         $text =~ s/\s+/ /gs; # collapse whitespace
         # add node, order important!
-        push(@{$self->{_index}}, $text);
+        push(@{$self->{'_index'}}, $text);
         # keep also a uniqueness counter
-        $self->{_unique_nodes}->{$text}++ if($text !~ /^\s*$/s);
+        $self->{'_unique_nodes'}->{$text}++ if($text !~ /^\s*$/s);
         return $text;
     }
-    @{$self->{_index}};
+    @{$self->{'_index'}};
 }
 
 ##################################
@@ -595,12 +595,13 @@ number and C<Pod::Hyperlink> object.
 sub hyperlink {
     my $self = shift;
     if($_[0]) {
-        push(@{$self->{_links}}, $_[0]);
+        push(@{$self->{'_links'}}, $_[0]);
         return $_[0];
     }
-    @{$self->{_links}};
+    @{$self->{'_links'}};
 }
 
+##################################
 
 # override Pod::Simple's whine() and scream() to use poderror()
 
@@ -631,21 +632,92 @@ sub scream {
     return 1;
 }
 
+
+##################################
+
+sub init_event {
+    $_[0]{'_thispara'} = '';
+    $_[0]{'_line'} = $_[1]{'start_line'};
+    $_[0]{'_cmds_since_head'}++;
 }
 
+sub handle_text { $_[0]{'_thispara'} .= $_[1] }
+
+# Directives
+sub handle_cut { }
+
+sub start_Para { shift->init_event(@_); }
+sub end_Para   {
+    my $self = shift;
+    # Get the NAME of the pod document
+    if ($self->{'_head_num'} == 1 && $self->{'_head_text'} eq 'NAME') {
+        if ($self->{'_thispara'} =~ /^\s*(\S+?)\s*[,-]/) {
+            $self->{'_pod_name'} = $1 unless defined $self->{'_pod_name'};
         }
     }
 }
 
-
-    }
-}
-
-    }
-}
-
+sub start_Verbatim {
     my $self = shift;
+    $self->init_event(@_);
+
+    if ($self->{'_head_num'} == 1 && $self->{'_head_text'} eq 'NAME') {
+        $self->poderror({ -line => $self->{'_line'},
+                          -severity => 'WARNING',
+                          -msg => 'Verbatim paragraph in NAME section' });
     }
+}
+
+sub start_head1 { shift->start_head(1, @_) }
+sub start_head2 { shift->start_head(2, @_) }
+sub start_head3 { shift->start_head(3, @_) }
+sub start_head4 { shift->start_head(4, @_) }
+sub start_head  {
+    my $self = shift;
+    my $h = shift;
+    $self->init_event(@_);
+    my $prev_h = $self->{'_head_num'};
+    $self->{'_head_num'} = $h;
+    $self->{"_count_head$h"}++;
+
+    if ($h > 1 && !$self->{'_count_head'.($h-1)}) {
+        $self->poderror({ -line => $self->{'_line'},
+                          -severity => 'WARNING',
+                          -msg => "=head$h without preceding higher level"});
+    }
+
+    # If this is the first =head of the doc, $prev_h is 0, thus less than $h
+    if ($self->{'_cmds_since_head'} == 1 && $prev_h >= $h) {
+        $self->poderror({ -line => $self->{'_line'},
+                          -severity => 'WARNING',
+                          -msg => 'empty section in previous paragraph'});
+    }
+}
+
+sub end_head1 { shift->end_head(@_);  }
+sub end_head2 { shift->end_head(@_);  }
+sub end_head3 { shift->end_head(@_);  }
+sub end_head4 { shift->end_head(@_);  }
+sub end_head  {
+    my $self = shift;
+    $self->{'_head_text'} = $self->{'_thispara'};
+    $self->{'_cmds_since_head'} = 0;
+    my $h = $self->{'_head_num'};
+
+    if ($self->{'_thispara'} eq '') {
+        $self->poderror({-line => $self->{'_line'},
+                         -severity => 'ERROR',
+                         -msg => "Empty head$h" });
+    }
+}
+
+# Formatting codes
+sub start_B { } # check for B<asdfB<asdf>> and such
+
+
+sub end_Document {
+    # check for $parser->content_seen for empty POD doc
+
 }
 
 1;
