@@ -1111,6 +1111,11 @@ sub _ponder_pod {
   # I do not know why it was not here before -- should it not be here?
   # $self->{'content_seen'} ||= 1;
 
+  # Content is always ignored, but trigger an event for completeness
+  $self->_handle_element_start( my $scratch = 'pod', $para->[1] );
+  $self->_handle_text( $para->[2] );
+  $self->_handle_element_end( $scratch = 'pod' );
+
   return;
 }
 
