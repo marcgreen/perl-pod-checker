@@ -646,7 +646,23 @@ sub init_event {
 sub handle_text { $_[0]{'_thispara'} .= $_[1] }
 
 # Directives
-sub handle_cut { }
+sub start_pod { shift->init_event(@_) }
+sub end_pod { 
+    if ($_[0]->{'_thispara'} =~ /\S/) {
+        $_[0]->poderror({ -line => $_[0]->{'_line'},
+                          -severity => 'ERROR',
+                          -msg => "Spurious text after =pod"});
+    }
+}
+
+sub handle_cut {
+    my ($line, $line_n, $self) = @_;
+    if ($line =~ /=cut\s+\S/) {
+        $self->poderror({ -line => $line_n,
+                          -severity => 'ERROR',
+                          -msg => "Spurious text after =cut"});
+    }
+}
 
 sub start_Para { shift->init_event(@_); }
 sub end_Para   {
