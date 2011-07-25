@@ -702,14 +702,17 @@ sub end_head3 { shift->end_head(@_);  }
 sub end_head4 { shift->end_head(@_);  }
 sub end_head  {
     my $self = shift;
-    $self->{'_head_text'} = $self->{'_thispara'};
+    # $text is for convenience
+    my $text = $self->{'_head_text'} = $self->{'_thispara'} =~ s/\s+$//r;
     $self->{'_cmds_since_head'} = 0;
     my $h = $self->{'_head_num'};
 
-    if ($self->{'_thispara'} eq '') {
+    $self->node($text); # remember this node
+
+    if ($text eq '') {
         $self->poderror({-line => $self->{'_line'},
                          -severity => 'ERROR',
-                         -msg => "Empty head$h" });
+                         -msg => "empty head$h" });
     }
 }
 
