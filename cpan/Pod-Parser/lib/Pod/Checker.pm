@@ -431,6 +431,7 @@ sub new {
     $new->{'_nodes'} = [];          # stack for =head/=item nodes
 
     $new->cut_handler( \&handle_cut ); # warn if text after =cut
+    $new->accept_targets('*'); # check all =begin/=for blocks
 
     return $new;
 }
@@ -647,7 +648,7 @@ sub handle_text { $_[0]{'_thispara'} .= $_[1] }
 
 # Directives
 sub start_pod { shift->init_event(@_) }
-sub end_pod { 
+sub end_pod {
     if ($_[0]->{'_thispara'} =~ /\S/) {
         $_[0]->poderror({ -line => $_[0]->{'_line'},
                           -severity => 'ERROR',
