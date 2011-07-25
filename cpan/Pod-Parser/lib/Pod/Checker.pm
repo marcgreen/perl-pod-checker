@@ -10,11 +10,12 @@
 package Pod::Checker;
 use strict;
 use warnings;
+use Data::Dumper
 
 our $VERSION = '1.45';  ## Current version of this package
-require  5.005;    ## requires this Perl version or later
+use 5.14.0;
 
-use Pod::ParseUtils; ## for hyperlinks
+use Pod::ParseUtils; ## for hyperlinks and lists
 
 =head1 NAME
 
@@ -418,17 +419,18 @@ sub new {
     $new->{_list_stack} = []; # stack for nested lists
     $new->{_have_begin} = ''; # stores =begin
     $new->{_links} = []; # stack for internal hyperlinks
-    $new->{_nodes} = []; # stack for =head/=item nodes
+    
     $new->{_index} = []; # text in X<>
 
     # 'current' also means 'most recent' in the follow comments
-    $new->{'_thispara'} = ''; # current POD paragraph
-    $new->{'_line'} = 0; # current line number
-    $new->{'_head_num'} = 0; # current =head level
-                             # set to 0 to make logic easier down the road
+    $new->{'_thispara'} = '';       # current POD paragraph
+    $new->{'_line'} = 0;            # current line number
+    $new->{'_head_num'} = 0;        # current =head level (set to 0 to make
+                                    #   logic easier down the road)
     $new->{'_cmds_since_head'} = 0; # num of POD directives since prev. =headN
+    $new->{'_nodes'} = [];          # stack for =head/=item nodes
 
-    $new->cut_handler( &handle_cut ); # warn if text after =cut
+    $new->cut_handler( \&handle_cut ); # warn if text after =cut
 
     return $new;
 }
@@ -615,9 +617,9 @@ sub hyperlink {
 sub whine {
     my ($self, $line, $complaint) = @_;
 
-    $self->poderror({-line => $line,
-                     -severity => 'ERROR',
-                     -msg => $complaint });
+#    $self->poderror({-line => $line,
+#                     -severity => 'ERROR',
+#                     -msg => $complaint });
 
     return 1; # assume everything is peachy keen
 }
@@ -625,9 +627,9 @@ sub whine {
 sub scream {
     my ($self, $line, $complaint) = @_;
 
-    $self->poderror({-line => $line,
-                     -severity => 'ERROR', # consider making severity 'FATAL'
-                     -msg => $complaint });
+#    $self->poderror({-line => $line,
+#                     -severity => 'ERROR', # consider making severity 'FATAL'
+#                     -msg => $complaint });
 
     return 1;
 }
