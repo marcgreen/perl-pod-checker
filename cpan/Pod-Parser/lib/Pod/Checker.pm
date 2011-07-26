@@ -415,13 +415,6 @@ sub new {
     $new->{'_NUM_ERRORS'} = 0;
     $new->{'_NUM_WARNINGS'} = 0;
 
-    # TODO do I need all of these?
-    $new->{_list_stack} = []; # stack for nested lists
-    $new->{_have_begin} = ''; # stores =begin
-    $new->{_links} = []; # stack for internal hyperlinks
-    
-    $new->{_index} = []; # text in X<>
-
     # 'current' also means 'most recent' in the follow comments
     $new->{'_thispara'} = '';       # current POD paragraph
     $new->{'_line'} = 0;            # current line number
@@ -429,6 +422,11 @@ sub new {
                                     #   logic easier down the road)
     $new->{'_cmds_since_head'} = 0; # num of POD directives since prev. =headN
     $new->{'_nodes'} = [];          # stack for =head/=item nodes
+    $new->{'_list_stack'} = [];     # stack for nested lists
+    $new->{'_have_begin'} = '';     # stores =begin
+    $new->{'_links'} = [];          # stack for internal hyperlinks
+    $new->{'_index'} = [];          # text in X<>
+
 
     $new->cut_handler( \&handle_cut ); # warn if text after =cut
     $new->accept_targets('*'); # check all =begin/=for blocks
@@ -638,16 +636,46 @@ sub scream {
 
 ##################################
 
-sub init_event {
+# Some helper subroutines
+
+sub _init_event { # assignments done at the start of most events
     $_[0]{'_thispara'} = '';
     $_[0]{'_line'} = $_[1]{'start_line'};
     $_[0]{'_cmds_since_head'}++;
 }
 
+sub _open_list {
+    my ($self, $indent, $line, $file) = @_;
+    $file //= $self->source_filename; # save some hassle
+    my $list = Pod::List->new(
+        -indent => $indent,
+        -start => $line,
+        -file => $file);
+    unshift(@{$self->{_list_stack}}, $list);
+    undef $self->{_list_item_contents};
+    $list;
+}
+
+sub _close_list {
+    my ($self, $line, $file) = @_;
+    $file //= $self->source_filename;
+    my $list = shift(@{$self->{_list_stack}});
+    if (defined $self->{_list_item_contents} &&
+      $self->{_list_item_contents} == 0) {
+        $self->poderror({ -line => $line, -file => $file,
+                          -severity => 'WARNING',
+                          -msg => 'previous =item has no contents' });
+    }
+    undef $self->{_list_item_contents};
+    $list;
+}
+
+##################################
+
 sub handle_text { $_[0]{'_thispara'} .= $_[1] }
 
-# Directives
-sub start_pod { shift->init_event(@_) }
+######## Directives
+sub start_pod { shift->_init_event(@_) }
 sub end_pod {
     if ($_[0]->{'_thispara'} =~ /\S/) {
         $_[0]->poderror({ -line => $_[0]->{'_line'},
@@ -665,7 +693,7 @@ sub handle_cut {
     }
 }
 
-sub start_Para { shift->init_event(@_); }
+sub start_Para { shift->_init_event(@_); }
 sub end_Para   {
     my $self = shift;
     # Get the NAME of the pod document
@@ -678,7 +706,7 @@ sub end_Para   {
 
 sub start_Verbatim {
     my $self = shift;
-    $self->init_event(@_);
+    $self->_init_event(@_);
 
     if ($self->{'_head_num'} == 1 && $self->{'_head_text'} eq 'NAME') {
         $self->poderror({ -line => $self->{'_line'},
@@ -686,6 +714,7 @@ sub start_Verbatim {
                           -msg => 'Verbatim paragraph in NAME section' });
     }
 }
+# Don't need an end_Verbatim
 
 sub start_head1 { shift->start_head(1, @_) }
 sub start_head2 { shift->start_head(2, @_) }
@@ -694,7 +723,7 @@ sub start_head4 { shift->start_head(4, @_) }
 sub start_head  {
     my $self = shift;
     my $h = shift;
-    $self->init_event(@_);
+    $self->_init_event(@_);
     my $prev_h = $self->{'_head_num'};
     $self->{'_head_num'} = $h;
     $self->{"_count_head$h"}++;
@@ -710,6 +739,18 @@ sub start_head  {
         $self->poderror({ -line => $self->{'_line'},
                           -severity => 'WARNING',
                           -msg => 'empty section in previous paragraph'});
+    }
+
+    # check if there is an open list
+    if (@{$self->{'_list_stack'}}) {
+        my $list;
+        while (($list = $self->_close_list($self->{'_line'})) &&
+          $list->indent() ne 'auto') {
+            $self->poderror({ -line => $self->{'_line'},
+                              -severity => 'ERROR',
+                              -msg => '=over on line '. $list->start() .
+                                  " without closing =back (at =head$h)" });
+        }
     }
 }
 
@@ -738,9 +779,25 @@ sub start_B { } # check for B<asdfB<asdf>> and such
 
 
 sub end_Document {
+    my $self = shift;
     # check for $parser->content_seen for empty POD doc
 
+    if (@{$self->{'_list_stack'}}) {
+        my $list;
+        while (($list = $self->_close_list('EOF')) &&
+          $list->indent() ne 'auto') {
+            $self->poderror({ -line => 'EOF',
+                              -severity => 'ERROR',
+                              -msg => '=over on line ' . $list->start() .
+                                  ' without closing =back' });
+        }
+    }
+
 }
+
+########  Formatting codes
+sub start_B { } # check for B<asdfB<asdf>> and such
+
 
 1;
 
