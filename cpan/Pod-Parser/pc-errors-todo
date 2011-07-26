@@ -115,11 +115,6 @@ This is most probably something you do not want.
 
 =end _disabled_
 
-=item * previous =item has no contents
-
-There is a list C<=item> right above the flagged line that has no
-text contents. You probably want to delete empty items.
-
 =item * preceding non-item paragraph(s)
 
 A list introduced by C<=over> starts with a text or verbatim paragraph,
