@@ -774,9 +774,79 @@ sub end_head  {
     }
 }
 
-# Formatting codes
-sub start_B { } # check for B<asdfB<asdf>> and such
+sub start_over_bullet {
 
+}
+
+sub end_over_bullet {
+
+}
+
+sub start_over_number {
+
+}
+
+sub end_over_number {
+
+}
+
+sub start_over_text {
+
+}
+
+## _open_list() in each end subroutine, _init_event in each start?
+
+sub end_over_text {
+
+}
+
+sub start_over_block {
+
+}
+
+sub end_over_block {
+
+}
+
+sub start_item_bullet {
+
+}
+
+sub end_item_bullet {
+
+}
+
+sub start_item_number {
+
+}
+
+sub end_item_number {
+
+}
+
+sub start_item_text {
+
+}
+
+sub end_item_text {
+
+}
+
+sub start_begin {
+
+}
+
+sub end_begin {
+
+}
+
+sub start_for {
+
+}
+
+sub end_for {
+
+}
 
 sub end_Document {
     my $self = shift;
