@@ -428,7 +428,8 @@ sub new {
     $new->{'_index'} = [];          # text in X<>
 
 
-    $new->cut_handler( \&handle_cut ); # warn if text after =cut
+    $new->cut_handler( \&handle_pod_and_cut ); # warn if text after =cut
+    $new->pod_handler( \&handle_pod_and_cut ); # warn if text after =pod
     $new->accept_targets('*'); # check all =begin/=for blocks
 
     return $new;
@@ -675,21 +676,13 @@ sub _close_list {
 sub handle_text { $_[0]{'_thispara'} .= $_[1] }
 
 ######## Directives
-sub start_pod { shift->_init_event(@_) }
-sub end_pod {
-    if ($_[0]->{'_thispara'} =~ /\S/) {
-        $_[0]->poderror({ -line => $_[0]->{'_line'},
-                          -severity => 'ERROR',
-                          -msg => "Spurious text after =pod"});
-    }
-}
-
-sub handle_cut {
+sub handle_pod_and_cut {
     my ($line, $line_n, $self) = @_;
-    if ($line =~ /=cut\s+\S/) {
+    $self->{'_cmds_since_head'}++;
+    if ($line =~ /=(pod|cut)\s+\S/) {
         $self->poderror({ -line => $line_n,
                           -severity => 'ERROR',
-                          -msg => "Spurious text after =cut"});
+                          -msg => "Spurious text after =$1"});
     }
 }
 
