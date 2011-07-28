@@ -646,28 +646,30 @@ sub _init_event { # assignments done at the start of most events
 }
 
 sub _open_list {
-    my ($self, $indent, $line, $file) = @_;
+    my ($self, $indent, $line, $type, $file) = @_;
     $file //= $self->source_filename; # save some hassle
     my $list = Pod::List->new(
         -indent => $indent,
-        -start => $line,
-        -file => $file);
-    unshift(@{$self->{_list_stack}}, $list);
-    undef $self->{_list_item_contents};
+        -start  => $line,
+        -type   => $type,
+        -file   => $file);
+    unshift(@{$self->{'_list_stack'}}, $list);
+    undef $self->{'_list_item_contents'};
     $list;
 }
 
 sub _close_list {
-    my ($self, $line, $file) = @_;
+    my ($self, $file) = @_;
     $file //= $self->source_filename;
-    my $list = shift(@{$self->{_list_stack}});
-    if (defined $self->{_list_item_contents} &&
-      $self->{_list_item_contents} == 0) {
-        $self->poderror({ -line => $line, -file => $file,
+    my $list = shift(@{$self->{'_list_stack'}});
+    if (defined $self->{'_list_item_contents'} &&
+      $self->{'_list_item_contents'} == 0) {
+        $self->poderror({ -line => #XXX Should line be start of list, 
+                              # end of list, or the item in question?, -file => $file,
                           -severity => 'WARNING',
                           -msg => 'previous =item has no contents' });
     }
-    undef $self->{_list_item_contents};
+    undef $self->{'_list_item_contents'};
     $list;
 }
 
@@ -753,53 +755,35 @@ sub end_head3 { shift->end_head(@_);  }
 sub end_head4 { shift->end_head(@_);  }
 sub end_head  {
     my $self = shift;
-    # $text is for convenience
-    my $text = $self->{'_head_text'} = $self->{'_thispara'} =~ s/\s+$//r;
+    # $arg is for convenience
+    # XXX: is the s/// necessary? test this and remove here and in item methods
+    my $arg = $self->{'_head_text'} = $self->{'_thispara'} =~ s/\s+$//r;
     $self->{'_cmds_since_head'} = 0;
     my $h = $self->{'_head_num'};
 
-    $self->node($text); # remember this node
+    $self->node($arg); # remember this node
 
-    if ($text eq '') {
+    if ($arg eq '') {
         $self->poderror({-line => $self->{'_line'},
                          -severity => 'ERROR',
                          -msg => "empty head$h" });
     }
 }
 
-sub start_over_bullet {
-
+sub start_over_bullet { shift->start_over(@_, 'bullet'); }
+sub start_over_number { shift->start_over(@_, 'number'); }
+sub start_over_text   { shift->start_over(@_, 'definition'); }
+sub start_over_block  { shift->start_over(@_, 'block'); }
+sub start_over {
+    my $self = shift;
+    my $type = pop;
+    $self->_init_event(@_);
+    $self->_open_list($_[1]{'indent'}, $self->{'_line'}, $type);
 }
-
-sub end_over_bullet {
-
-}
-
-sub start_over_number {
-
-}
-
-sub end_over_number {
-
-}
-
-sub start_over_text {
-
-}
-
-## _open_list() in each end subroutine, _init_event in each start?
-
-sub end_over_text {
-
-}
-
-sub start_over_block {
-
-}
-
-sub end_over_block {
-
-}
+sub end_over_bullet { shift->_close_list(); }
+sub end_over_number { shift->_close_list(); }
+sub end_over_text   { shift->_close_list(); }
+sub end_over_block  { shift->_close_list(); }
 
 sub start_item_bullet {
 
