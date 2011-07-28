@@ -178,3 +178,24 @@ For example if there is a C<=head2> in the POD file prior to a
 C<=head1>.
 
 =back
+
+=head2 Hyperlinks
+
+=over
+
+=item * ignoring leading/trailing whitespace in link
+
+There is whitespace at the beginning or the end of the contents of L<...>.
+
+=item * (section) in '$page' deprecated
+
+There is a section detected in the page name of L<...>, e.g. L<passwd(2)>. POD hyperlinks may point to POD documents only. Please write C<passwd(2)> instead. Some formatters are able to expand this to appropriate code. For links to (builtin) functions, please say L<perlfunc/mkdir>, without ().
+
+=item * alternative text/node '%s' contains non-escaped | or /
+
+The characters | and / are special in the L<...> context. Although the hyperlink parser does its best to determine which "/" is text and which is a delimiter in case of doubt, one ought to escape these literal characters like this:
+
+      /     E<sol>
+      |     E<verbar>
+
+=back

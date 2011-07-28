@@ -61,10 +61,6 @@ does not make sense.
 
 The I<STRING> found cannot be interpreted as a character entity.
 
-=item * Entity number out of range
-
-An entity specified by number (dec, hex, oct) is out of range (1-255).
-
 =item * malformed link LE<lt>E<gt>
 
 The link found cannot be parsed because it does not conform to the
@@ -149,5 +145,22 @@ C<=item> without any parameters is deprecated. It should either be followed
 by C<*> to indicate an unordered list, by a number (optionally followed
 by a dot) to indicate an ordered (numbered) list or simple text for a
 definition list.
+
+=back
+
+=head2 Hyperlinks
+
+=over
+
+=item * ignoring leading/trailing whitespace in link
+
+There is whitespace at the beginning or the end of the contents of L<...>.
+
+=item * alternative text/node '%s' contains non-escaped | or /
+
+The characters | and / are special in the L<...> context. Although the hyperlink parser does its best to determine which "/" is text and which is a delimiter in case of doubt, one ought to escape these literal characters like this:
+
+      /     E<sol>
+      |     E<verbar>
 
 =back
