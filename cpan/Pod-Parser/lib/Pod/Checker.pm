@@ -617,9 +617,9 @@ sub hyperlink {
 sub whine {
     my ($self, $line, $complaint) = @_;
 
-#    $self->poderror({-line => $line,
-#                     -severity => 'ERROR',
-#                     -msg => $complaint });
+    $self->poderror({-line => $line,
+                     -severity => 'ERROR',
+                     -msg => $complaint });
 
     return 1; # assume everything is peachy keen
 }
@@ -647,30 +647,21 @@ sub _init_event { # assignments done at the start of most events
 
 sub _open_list {
     my ($self, $indent, $line, $type, $file) = @_;
-    $file //= $self->source_filename; # save some hassle
     my $list = Pod::List->new(
         -indent => $indent,
         -start  => $line,
         -type   => $type,
-        -file   => $file);
-    unshift(@{$self->{'_list_stack'}}, $list);
-    undef $self->{'_list_item_contents'};
+        -file   => $file // $self->source_filename);
+    unshift (@{$self->{'_list_stack'}}, $list);
     $list;
 }
 
-sub _close_list {
-    my ($self, $file) = @_;
-    $file //= $self->source_filename;
-    my $list = shift(@{$self->{'_list_stack'}});
-    if (defined $self->{'_list_item_contents'} &&
-      $self->{'_list_item_contents'} == 0) {
-        $self->poderror({ -line => #XXX Should line be start of list, 
-                              # end of list, or the item in question?, -file => $file,
-                          -severity => 'WARNING',
-                          -msg => 'previous =item has no contents' });
-    }
-    undef $self->{'_list_item_contents'};
-    $list;
+sub _close_list { 
+    my $self = shift;
+    
+    # check if any =items in =over or if empty and warn if so
+
+    @{$_[0]->{'_list_stack'}};
 }
 
 ##################################
@@ -785,27 +776,19 @@ sub end_over_number { shift->_close_list(); }
 sub end_over_text   { shift->_close_list(); }
 sub end_over_block  { shift->_close_list(); }
 
-sub start_item_bullet {
+sub start_item_bullet { shift->_init_event(@_) }
+sub end_item_bullet {
+    # XXX If =item has no '*', is it sent here? Should a warning be issued?
     my $self = shift;
-    $self->_init_event(@_);
-
-    # some list bookkeeping
-    $self->{'_list_item_contents'}++ if defined $self->{'_list_item_contents'};
-    if (@{$self->{'_list_stack'}} && !$self->{'_list_stack'}->[0]->item()) {
-        $self->{'_list_stack'}->[0]->{'_has_par'} = 1;
+    if (!$self->{'_thispara'}) {
+        $self->poderror({ -line => $self->{'_line'},
+                          -severity => 'WARNING',
+                          -msg => '=item has no contents' });
     }
 
-    # check if prev. item had content
-    # something with $list->has_par?
-}
-
-sub end_item_bullet {
-    my $self = shift;
-    my $arg = $self->{'_thispara'} =~ s/\s+$//r;
-    $self->{'_list_item_contents'} = $arg =~ /\S/ ? 1 : 0;
     my $list = $self->{'_list_stack'}->[0];
-    $list->item($arg); # add item to list
-    $self->node($arg); # remember this node
+    $list->item($self->{'_thispara'}); # add item to list
+    $self->node($self->{'_thispara'}); # remember this node
 }
 
 sub start_item_number {
