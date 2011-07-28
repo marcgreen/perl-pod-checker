@@ -825,15 +825,18 @@ sub end_item_text {
 
 }
 
-sub start_begin {
+sub start_for { # =for and =begin directives
+    my ($self, $flags) = @_;
 
-}
-
-sub end_begin {
-
-}
-
-sub start_for {
+=for comment
+$flags looks like:
+          '~really' => '=begin',
+          'target' => 'html',
+          '~ignore' => 0,
+          'target_matching' => '*',
+          'start_line' => 135,
+          '~resolve' => 0
+=cut
 
 }
 
