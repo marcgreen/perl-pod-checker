@@ -786,11 +786,26 @@ sub end_over_text   { shift->_close_list(); }
 sub end_over_block  { shift->_close_list(); }
 
 sub start_item_bullet {
+    my $self = shift;
+    $self->_init_event(@_);
 
+    # some list bookkeeping
+    $self->{'_list_item_contents'}++ if defined $self->{'_list_item_contents'};
+    if (@{$self->{'_list_stack'}} && !$self->{'_list_stack'}->[0]->item()) {
+        $self->{'_list_stack'}->[0]->{'_has_par'} = 1;
+    }
+
+    # check if prev. item had content
+    # something with $list->has_par?
 }
 
 sub end_item_bullet {
-
+    my $self = shift;
+    my $arg = $self->{'_thispara'} =~ s/\s+$//r;
+    $self->{'_list_item_contents'} = $arg =~ /\S/ ? 1 : 0;
+    my $list = $self->{'_list_stack'}->[0];
+    $list->item($arg); # add item to list
+    $self->node($arg); # remember this node
 }
 
 sub start_item_number {
