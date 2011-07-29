@@ -2,55 +2,17 @@
 
 =over 4
 
-=item * =over on line I<N> without closing =back
-
-The C<=over> command does not have a corresponding C<=back> before the
-next heading (C<=head1> or C<=head2>) or the end of the file.
-
-=item * =item without previous =over
-
-=item * =back without previous =over
-
-An C<=item> or C<=back> command has been found outside a
-C<=over>/C<=back> block.
-
-=item * No argument for =begin
-
-A C<=begin> command was found that is not followed by the formatter
-specification.
-
-=item * =end without =begin
-
-A standalone C<=end> command was found.
-
 =item * Nested =begin's
 
 There were at least two consecutive C<=begin> commands without
 the corresponding C<=end>. Only one C<=begin> may be active at
 a time.
 
-=item * =for without formatter specification
-
-There is no specification of the formatter after the C<=for> command.
-
 =item * unresolved internal link I<NAME>
 
 The given link to I<NAME> does not have a matching node in the current
 POD. This also happened when a single word node name is not enclosed in
 C<"">.
-
-=item * Unknown command "I<CMD>"
-
-An invalid POD command has been found. Valid are C<=head1>, C<=head2>,
-C<=head3>, C<=head4>, C<=over>, C<=item>, C<=back>, C<=begin>, C<=end>,
-C<=for>, C<=pod>, C<=cut>
-
-=item * Unknown interior-sequence "I<SEQ>"
-
-An invalid markup command has been encountered. Valid are:
-C<BE<lt>E<gt>>, C<CE<lt>E<gt>>, C<EE<lt>E<gt>>, C<FE<lt>E<gt>>,
-C<IE<lt>E<gt>>, C<LE<lt>E<gt>>, C<SE<lt>E<gt>>, C<XE<lt>E<gt>>,
-C<ZE<lt>E<gt>>
 
 =item * nested commands I<CMD>E<lt>...I<CMD>E<lt>...E<gt>...E<gt>
 
@@ -73,14 +35,6 @@ The C<ZE<lt>E<gt>> sequence is supposed to be empty.
 =item * empty XE<lt>E<gt>
 
 The index entry specified contains nothing but whitespace.
-
-=item * Spurious text after =pod / =cut
-
-The commands C<=pod> and C<=cut> do not take any arguments.
-
-=item * Spurious character(s) after =back
-
-The C<=back> command does not take any arguments.
 
 =back
 
@@ -111,12 +65,6 @@ This is most probably something you do not want.
 
 =end _disabled_
 
-=item * preceding non-item paragraph(s)
-
-A list introduced by C<=over> starts with a text or verbatim paragraph,
-but continues with C<=item>s. Move the non-item paragraph out of the
-C<=over>/C<=back> block.
-
 =item * =item type mismatch (I<one> vs. I<two>)
 
 A list started with e.g. a bullet-like C<=item> and continued with a
@@ -134,10 +82,6 @@ greater than 1.
 
 A character entity was found that does not belong to the standard
 ISO set or the POD specials C<verbar> and C<sol>.
-
-=item * No items in =over
-
-The list opened with C<=over> does not contain any items.
 
 =item * No argument for =item
 
@@ -164,3 +108,65 @@ The characters | and / are special in the L<...> context. Although the hyperlink
       |     E<verbar>
 
 =back
+
+=head1 IN POD::SIMPLE ALREADY
+
+=head2 Errors
+
+=over
+
+=item * =over on line I<N> without closing =back
+
+The C<=over> command does not have a corresponding C<=back> before the
+next heading (C<=head1> or C<=head2>) or the end of the file.
+
+=item * =item without previous =over
+
+=item * =back without previous =over
+
+An C<=item> or C<=back> command has been found outside a
+C<=over>/C<=back> block.
+
+=item * No argument for =begin
+
+A C<=begin> command was found that is not followed by the formatter
+specification.
+
+=item * =end without =begin
+
+A standalone C<=end> command was found.
+
+=item * =for without formatter specification
+
+There is no specification of the formatter after the C<=for> command.
+
+=item * Unknown command "I<CMD>"
+
+An invalid POD command has been found. Valid are C<=head1>, C<=head2>,
+C<=head3>, C<=head4>, C<=over>, C<=item>, C<=back>, C<=begin>, C<=end>,
+C<=for>, C<=pod>, C<=cut>
+
+=item * Unknown interior-sequence "I<SEQ>"
+
+An invalid markup command has been encountered. Valid are:
+C<BE<lt>E<gt>>, C<CE<lt>E<gt>>, C<EE<lt>E<gt>>, C<FE<lt>E<gt>>,
+C<IE<lt>E<gt>>, C<LE<lt>E<gt>>, C<SE<lt>E<gt>>, C<XE<lt>E<gt>>,
+C<ZE<lt>E<gt>>
+
+=item * Spurious text after =pod / =cut
+
+The commands C<=pod> and C<=cut> do not take any arguments.
+
+=item * Spurious character(s) after =back
+
+The C<=back> command does not take any arguments.
+
+=back
+
+=head2 Warnings (reported as errors in Pod::Simple though, fix this)
+
+=item * preceding non-item paragraph(s)
+
+A list introduced by C<=over> starts with a text or verbatim paragraph,
+but continues with C<=item>s. Move the non-item paragraph out of the
+C<=over>/C<=back> block.
