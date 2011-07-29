@@ -427,10 +427,10 @@ sub new {
     $new->{'_links'} = [];          # stack for internal hyperlinks
     $new->{'_index'} = [];          # text in X<>
 
-
+    $new->accept_targets('*'); # check all =begin/=for blocks
     $new->cut_handler( \&handle_pod_and_cut ); # warn if text after =cut
     $new->pod_handler( \&handle_pod_and_cut ); # warn if text after =pod
-    $new->accept_targets('*'); # check all =begin/=for blocks
+    $new->parse_empty_lists(1); # warn if they are empty
 
     return $new;
 }
@@ -658,10 +658,13 @@ sub _open_list {
 
 sub _close_list { 
     my $self = shift;
-    
-    # check if any =items in =over or if empty and warn if so
-
-    @{$_[0]->{'_list_stack'}};
+    my $list = shift @{$self->{'_list_stack'}};
+    if (!$list->item()) {
+        $self->poderror({-line => $list->start(),
+                         -severity => 'WARNING',
+                         -msg => 'No items in =over/=back list'});
+    }
+    $list;
 }
 
 ##################################
@@ -727,7 +730,7 @@ sub start_head  {
                           -msg => 'empty section in previous paragraph'});
     }
 
-    # check if there is an open list
+    # pod::Simple already whines about this
     if (@{$self->{'_list_stack'}}) {
         my $list;
         while (($list = $self->_close_list($self->{'_line'})) &&
@@ -778,7 +781,7 @@ sub end_over_block  { shift->_close_list(); }
 
 sub start_item_bullet { shift->_init_event(@_) }
 sub end_item_bullet {
-    # XXX If =item has no '*', is it sent here? Should a warning be issued?
+    # XXX If =item has no '*', it is assumed to be a bullet - how do I issue warning?
     my $self = shift;
     if (!$self->{'_thispara'}) {
         $self->poderror({ -line => $self->{'_line'},
@@ -830,6 +833,7 @@ sub end_Document {
     my $self = shift;
     # check for $parser->content_seen for empty POD doc
 
+    # pod::Simple already whines about this
     if (@{$self->{'_list_stack'}}) {
         my $list;
         while (($list = $self->_close_list('EOF')) &&
