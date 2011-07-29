@@ -23,6 +23,8 @@ __END__
 
 poderrors.t - test Pod::Checker on some pod syntax errors
 
+    GASP! A verbatim paragraph in NAME
+
 =unknown1 this is an unknown command with two N<unknownA>
 and D<unknownB> interior sequences.
 
@@ -102,6 +104,7 @@ E<abcI<bla>>
 E<0x100>
 E<07777>
 E<300>
+E<unknown_entity>
 
 =head2 Unresolved internal links
 
@@ -160,9 +163,27 @@ This paragrapgh is misplaced - it ought to be an item.
 
 =back
 
+=over
+
+    This verbatim paragraph should not be here
+    
+=item *
+
+bullet
+
+=item 1
+
+number, uh oh
+
+=back
+
 All empty over/back:
 
 =over 4
+
+=over 2
+
+=back
 
 =back
 
@@ -203,6 +224,12 @@ L<"I/O Operators">
 L<perlop/"I/O Operators">
 trigger a podchecker warning (using bleadperl) :
     node 'I/O Operators' contains non-escaped | or /
+
+=head1
+
+Empty head above and unclosed over below
+
+=over
 
 =cut
 
