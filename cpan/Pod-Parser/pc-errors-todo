@@ -153,10 +153,6 @@ C<BE<lt>E<gt>>, C<CE<lt>E<gt>>, C<EE<lt>E<gt>>, C<FE<lt>E<gt>>,
 C<IE<lt>E<gt>>, C<LE<lt>E<gt>>, C<SE<lt>E<gt>>, C<XE<lt>E<gt>>,
 C<ZE<lt>E<gt>>
 
-=item * Spurious text after =pod / =cut
-
-The commands C<=pod> and C<=cut> do not take any arguments.
-
 =item * Spurious character(s) after =back
 
 The C<=back> command does not take any arguments.
