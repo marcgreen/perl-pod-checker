@@ -705,6 +705,9 @@ sub start_Verbatim {
 }
 # Don't need an end_Verbatim
 
+# Do I need to do anything else with this?
+sub start_Data { shift->_init_event() }
+
 sub start_head1 { shift->start_head(1, @_) }
 sub start_head2 { shift->start_head(2, @_) }
 sub start_head3 { shift->start_head(3, @_) }
@@ -743,10 +746,10 @@ sub start_head  {
     }
 }
 
-sub end_head1 { shift->end_head(@_);  }
-sub end_head2 { shift->end_head(@_);  }
-sub end_head3 { shift->end_head(@_);  }
-sub end_head4 { shift->end_head(@_);  }
+sub end_head1 { shift->end_head(@_) }
+sub end_head2 { shift->end_head(@_) }
+sub end_head3 { shift->end_head(@_) }
+sub end_head4 { shift->end_head(@_) }
 sub end_head  {
     my $self = shift;
     # $arg is for convenience
@@ -764,24 +767,29 @@ sub end_head  {
     }
 }
 
-sub start_over_bullet { shift->start_over(@_, 'bullet'); }
-sub start_over_number { shift->start_over(@_, 'number'); }
-sub start_over_text   { shift->start_over(@_, 'definition'); }
-sub start_over_block  { shift->start_over(@_, 'block'); }
+sub start_over_bullet { shift->start_over(@_, 'bullet') }
+sub start_over_number { shift->start_over(@_, 'number') }
+sub start_over_text   { shift->start_over(@_, 'definition') }
+sub start_over_block  { shift->start_over(@_, 'block') }
 sub start_over {
     my $self = shift;
     my $type = pop;
     $self->_init_event(@_);
     $self->_open_list($_[1]{'indent'}, $self->{'_line'}, $type);
 }
-sub end_over_bullet { shift->_close_list(); }
-sub end_over_number { shift->_close_list(); }
-sub end_over_text   { shift->_close_list(); }
-sub end_over_block  { shift->_close_list(); }
+sub end_over_bullet { shift->_close_list() }
+sub end_over_number { shift->_close_list() }
+sub end_over_text   { shift->_close_list() }
+sub end_over_block  { shift->_close_list() }
 
 sub start_item_bullet { shift->_init_event(@_) }
-sub end_item_bullet {
+sub start_item_number { shift->_init_event(@_) }
+sub start_item_text   { shift->_init_event(@_) }
+sub end_item_bullet { shift->end_item() }
     # XXX If =item has no '*', it is assumed to be a bullet - how do I issue warning?
+sub end_item_number { shift->end_item() }
+sub end_item_text   { shift->end_item() }
+sub end_item {
     my $self = shift;
     if (!$self->{'_thispara'}) {
         $self->poderror({ -line => $self->{'_line'},
@@ -794,24 +802,11 @@ sub end_item_bullet {
     $self->node($self->{'_thispara'}); # remember this node
 }
 
-sub start_item_number {
-
-}
-
-sub end_item_number {
-
-}
-
-sub start_item_text {
-
-}
-
-sub end_item_text {
-
-}
-
 sub start_for { # =for and =begin directives
     my ($self, $flags) = @_;
+    $self->_init_event();
+
+    # check for nested =begins (_begin_stack)
 
 =for comment
 $flags looks like:
@@ -849,6 +844,8 @@ sub end_Document {
 
 ########  Formatting codes
 sub start_B { } # check for B<asdfB<asdf>> and such
+
+sub start_L { } # check for unresolved internal links
 
 
 1;
