@@ -611,7 +611,7 @@ sub hyperlink {
 # Ignore $self->{'no_whining'} b/c $self->{'quiet'} takes care of it in poderror
 # Don't bother incrementing $self->{'errors_seen'} -- it's not used
 # Don't bother pushing to $self->{'errata'} b/c poderror() outputs immediately
-# We don't need to set $new->no_errata_section(1) b/c of these overrides
+# We don't need to set $self->no_errata_section(1) b/c of these overrides
 
 
 sub whine {
@@ -627,9 +627,9 @@ sub whine {
 sub scream {
     my ($self, $line, $complaint) = @_;
 
-#    $self->poderror({-line => $line,
-#                     -severity => 'ERROR', # consider making severity 'FATAL'
-#                     -msg => $complaint });
+    $self->poderror({-line => $line,
+                     -severity => 'ERROR', # consider making severity 'FATAL'
+                     -msg => $complaint });
 
     return 1;
 }
@@ -645,7 +645,7 @@ sub _init_event { # assignments done at the start of most events
     $_[0]{'_cmds_since_head'}++;
 }
 
-sub _open_list {
+sub _open_list { # keep track of =open/=back blocks
     my ($self, $indent, $line, $type, $file) = @_;
     my $list = Pod::List->new(
         -indent => $indent,
@@ -665,6 +665,14 @@ sub _close_list {
                          -msg => 'No items in =over/=back list'});
     }
     $list;
+}
+
+sub _check_fcode {
+    my ($self, $current, $previous) = @_;
+    # If there is an fcode inside the same fcode
+    if ($current == $previous) {
+        $self->poderror({-line => $self->{'_line'}
+        ...
 }
 
 ##################################
@@ -812,10 +820,36 @@ sub end_for {
     }
 }
 
-########  Formatting codes
-sub start_B { } # check for B<asdfB<asdf>> and such
+sub end_Document {
+    my $self = shift;
 
-sub start_L { } # check for unresolved internal links
+    # check missing internal link thing
+
+    # no POD found here
+    $self->num_errors(-1) unless $self->content_seen;
+}
+
+########  Formatting codes
+
+# TODO set line number in start_B, finish _check_fcode, finish L processing, _check_fcode inevery end_fcode (and unshift in start_fcode)
+sub start_B { unshift shift->{'_fcode_stack'}, 'B' } # check for B<asdfB<asdf>> via stack
+sub end_B {
+    my $self = shift;
+    $self->_check_fcode(shift $self->{'_fcode_stack'}, # current fcode removed
+                        $self->{'_fcode_stack'}[0]); # previous fcode
+}
+
+#sub start_L {
+#    my ($self, $flags) = @_;
+#    $self->{'_thispara'} = '' }
+#sub end_L { 
+#    my $self = shift;
+#    my $linktext = $self->{'_thispara'};
+
+#}
+
+sub start_X { shift->{'_thispara'} = '' }
+sub end_X { $_[0]->idx($_[0]->['_thispara']) }
 
 
 1;
