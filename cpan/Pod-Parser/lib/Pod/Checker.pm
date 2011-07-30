@@ -792,30 +792,24 @@ sub end_item {
 
 sub start_for { # =for and =begin directives
     my ($self, $flags) = @_;
-    $self->_init_event();
-
-    # check for nested =begins (_begin_stack)
-
-=for comment
-$flags looks like:
-          '~really' => '=begin',
-          'target' => 'html',
-          '~ignore' => 0,
-          'target_matching' => '*',
-          'start_line' => 135,
-          '~resolve' => 0
-=cut
-
+    $self->_init_event($flags);
+    if ($self->{'_have_begin'}) {
+        # already have a begin
+        $self->poderror({ -line => $self->{'_line'},
+                          -severity => 'ERROR',
+                          -msg => q{Nested =begin's (first at line } .
+                              $self->{'_have_begin'} . ')'});
+    } else {
+        $self->{'_have_begin'} = $self->{'_line'} .':'. $flags->{'target'};
+    }
 }
 
 sub end_for {
-
-}
-
-sub end_Document {
     my $self = shift;
-    # check for $parser->content_seen for empty POD doc
-
+    if ($self->{'_have_begin'}) {
+        # close exisiting =begin
+        $self->{'have_begin'} = '';
+    }
 }
 
 ########  Formatting codes
