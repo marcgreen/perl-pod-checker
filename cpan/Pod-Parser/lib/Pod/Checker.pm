@@ -732,18 +732,6 @@ sub start_head  {
                           -severity => 'WARNING',
                           -msg => 'empty section in previous paragraph'});
     }
-
-    # pod::Simple already whines about this
-    if (@{$self->{'_list_stack'}}) {
-        my $list;
-        while (($list = $self->_close_list($self->{'_line'})) &&
-          $list->indent() ne 'auto') {
-            $self->poderror({ -line => $self->{'_line'},
-                              -severity => 'ERROR',
-                              -msg => '=over on line '. $list->start() .
-                                  " without closing =back (at =head$h)" });
-        }
-    }
 }
 
 sub end_head1 { shift->end_head(@_) }
@@ -827,18 +815,6 @@ sub end_for {
 sub end_Document {
     my $self = shift;
     # check for $parser->content_seen for empty POD doc
-
-    # pod::Simple already whines about this
-    if (@{$self->{'_list_stack'}}) {
-        my $list;
-        while (($list = $self->_close_list('EOF')) &&
-          $list->indent() ne 'auto') {
-            $self->poderror({ -line => 'EOF',
-                              -severity => 'ERROR',
-                              -msg => '=over on line ' . $list->start() .
-                                  ' without closing =back' });
-        }
-    }
 
 }
 
