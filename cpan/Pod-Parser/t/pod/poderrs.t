@@ -48,6 +48,12 @@ sure we get a warning.
 	                                     	
 The above blank line contains tabs and spaces only
 
+F<Many B<fcodes B<inside C<other I<fcodes F<inside I<many S<many C<more X<fcodes. S<This is X<ridiculous.>>>>>>>>>>>>
+
+A L<link|perlvar/$/> to L<perlvar/$E<sol>>
+
+A L<nested L<link>>
+
 =head1 Additional tests
 
 =head2 item without over
