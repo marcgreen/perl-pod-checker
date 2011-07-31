@@ -423,9 +423,11 @@ sub new {
     $new->{'_cmds_since_head'} = 0; # num of POD directives since prev. =headN
     $new->{'_nodes'} = [];          # stack for =head/=item nodes
     $new->{'_list_stack'} = [];     # stack for nested lists
+    $new->{'_fcode_stack'} = [];    # stack for nested formatting codes
+    $new->{'_fcode_pos'} = [];      # stack for position in paragraph of fcodes
     $new->{'_have_begin'} = '';     # stores =begin
     $new->{'_links'} = [];          # stack for internal hyperlinks
-    $new->{'_index'} = [];          # text in X<>
+    $new->{'_index'} = [];          # stack for text in X<>s
 
     $new->accept_targets('*'); # check all =begin/=for blocks
     $new->cut_handler( \&handle_pod_and_cut ); # warn if text after =cut
@@ -617,6 +619,8 @@ sub hyperlink {
 sub whine {
     my ($self, $line, $complaint) = @_;
 
+    # check if complaint is that one error that is supposed to be a warning
+
     $self->poderror({-line => $line,
                      -severity => 'ERROR',
                      -msg => $complaint });
@@ -668,11 +672,13 @@ sub _close_list {
 }
 
 sub _check_fcode {
-    my ($self, $current, $previous) = @_;
-    # If there is an fcode inside the same fcode
-    if ($current == $previous) {
-        $self->poderror({-line => $self->{'_line'}
-        ...
+    my ($self, $inner, $outers) = @_;
+    # Check for an fcode inside another of the same fcode
+    if ($inner ~~ $outers) {
+        $self->poderror({-line => $self->{'_line'},
+                         -severity => 'ERROR',
+                         -msg => "nested commands $inner<...$inner<...>...>"});
+    }
 }
 
 ##################################
@@ -831,25 +837,65 @@ sub end_Document {
 
 ########  Formatting codes
 
-# TODO set line number in start_B, finish _check_fcode, finish L processing, _check_fcode inevery end_fcode (and unshift in start_fcode)
-sub start_B { unshift shift->{'_fcode_stack'}, 'B' } # check for B<asdfB<asdf>> via stack
-sub end_B {
-    my $self = shift;
-    $self->_check_fcode(shift $self->{'_fcode_stack'}, # current fcode removed
-                        $self->{'_fcode_stack'}[0]); # previous fcode
+sub start_B { shift->start_fcode('B') }
+sub start_C { shift->start_fcode('C') }
+sub start_F { shift->start_fcode('F') }
+sub start_I { shift->start_fcode('I') }
+sub start_S { shift->start_fcode('S') }
+sub start_fcode {
+    my ($self, $fcode) = @_;
+    unshift $self->{'_fcode_stack'}, $fcode;
 }
 
-#sub start_L {
-#    my ($self, $flags) = @_;
-#    $self->{'_thispara'} = '' }
-#sub end_L { 
-#    my $self = shift;
-#    my $linktext = $self->{'_thispara'};
+sub end_B { shift->end_fcode() }
+sub end_C { shift->end_fcode() }
+sub end_F { shift->end_fcode() }
+sub end_I { shift->end_fcode() }
+sub end_S { shift->end_fcode() }
+sub end_fcode {
+    my $self = shift;
+    $self->_check_fcode(shift $self->{'_fcode_stack'}, # current fcode removed
+                        $self->{'_fcode_stack'}); # previous fcodes
+}
 
-#}
+sub start_L {
+    my ($self, $flags) = @_;
+    $self->start_fcode('L');
+    # keep track of where L<> starts in the paragraph
+    # (this is a stack so nested L<>s are handled correctly)
+    push $self->{'_fcode_pos'}, length $self->{'_thispara'};
+    my $link = Pod::Hyperlink->new(-page => $flags->{'to'},
+                                   -node => $flags->{'section'},
+                                   -line => $self->{'_line'});
+                                 # -alttext filled in in end_L
+    $self->{'_temp_link'} = $link; # store so end_L can retrieve it
+}
+sub end_L {
+    my $self = shift;
+    # extract contents of L<>
+    my $ltext = substr($self->{'_thispara'},
+                       pop $self->{'_fcode_pos'}); # start at the beginning of L
+    my $link = $self->{'_temp_link'}; # the link we made in start_L
+    $link->alttext($ltext);
+    $self->hyperlink([$self->{'_line'}, $link]); # remember link
+    $self->end_fcode();
+}
 
-sub start_X { shift->{'_thispara'} = '' }
-sub end_X { $_[0]->idx($_[0]->['_thispara']) }
+sub start_X {
+    my $self = shift;
+    $self->start_fcode('X');
+    # keep track of where X<> starts in the paragraph
+    # (this is a stack so nested X<>s are handled correctly)
+    push $self->{'_fcode_pos'}, length $self->{'_thispara'};
+}
+sub end_X {
+    my $self = shift;
+    # extract contents of X<>
+    my $x = substr($self->{'_thispara'},
+                   pop $self->{'_fcode_pos'}); # start at the beginning of X<>
+    $self->idx($x); # remember this node
+    $self->end_fcode();
+}
 
 
 1;

@@ -8,11 +8,6 @@ The given link to I<NAME> does not have a matching node in the current
 POD. This also happened when a single word node name is not enclosed in
 C<"">.
 
-=item * nested commands I<CMD>E<lt>...I<CMD>E<lt>...E<gt>...E<gt>
-
-Two nested identical markup commands have been found. Generally this
-does not make sense.
-
 =item * garbled entity I<STRING>
 
 The I<STRING> found cannot be interpreted as a character entity.
