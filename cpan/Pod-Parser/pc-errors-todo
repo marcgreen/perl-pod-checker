@@ -54,12 +54,6 @@ This is most probably something you do not want.
 
 =end _disabled_
 
-=item * =item type mismatch (I<one> vs. I<two>)
-
-A list started with e.g. a bullet-like C<=item> and continued with a
-numbered one. This is obviously inconsistent. For most translators the
-type of the I<first> C<=item> determines the type of the list.
-
 =item * I<N> unescaped C<E<lt>E<gt>> in paragraph
 
 Angle brackets not written as C<E<lt>ltE<gt>> and C<E<lt>gtE<gt>>
@@ -155,3 +149,9 @@ The C<=back> command does not take any arguments.
 A list introduced by C<=over> starts with a text or verbatim paragraph,
 but continues with C<=item>s. Move the non-item paragraph out of the
 C<=over>/C<=back> block.
+
+=item * =item type mismatch (I<one> vs. I<two>)
+
+A list started with e.g. a bullet-like C<=item> and continued with a
+numbered one. This is obviously inconsistent. For most translators the
+type of the I<first> C<=item> determines the type of the list.

@@ -17,6 +17,26 @@ exit( ($passed == 1) ? 0 : -1 )  unless $ENV{HARNESS_ACTIVE};
 
 __END__
 
+=pod
+
+L< jump|test/section >
+
+L<>
+
+L<alt|text|no|de/sect|ion>
+
+L<alt/text|no/de/sect/ion>
+
+L<normal>
+
+L< leading>
+
+L<"trailing ">
+
+L< both >
+
+L<man(page)>
+
 =head2 This should cause a warning
 
 =head1 NAME

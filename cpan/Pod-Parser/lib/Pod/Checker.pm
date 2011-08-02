@@ -620,6 +620,8 @@ sub whine {
     my ($self, $line, $complaint) = @_;
 
     # check if complaint is that one error that is supposed to be a warning
+    # - =item type mismatch
+    # - preceding non-item paragraphs
 
     $self->poderror({-line => $line,
                      -severity => 'ERROR',
@@ -788,7 +790,8 @@ sub start_item_bullet { shift->_init_event(@_) }
 sub start_item_number { shift->_init_event(@_) }
 sub start_item_text   { shift->_init_event(@_) }
 sub end_item_bullet { shift->end_item() }
-    # XXX If =item has no '*', it is assumed to be a bullet - how do I issue warning?
+    # XXX If =item has no argument, it is assumed to be a bullet
+    #       - how do I issue warning? modify BlackBox?
 sub end_item_number { shift->end_item() }
 sub end_item_text   { shift->end_item() }
 sub end_item {
@@ -829,7 +832,7 @@ sub end_for {
 sub end_Document {
     my $self = shift;
 
-    # check missing internal link thing
+    # check unresolved internal link thing
 
     # no POD found here
     $self->num_errors(-1) unless $self->content_seen;
@@ -858,25 +861,57 @@ sub end_fcode {
                         $self->{'_fcode_stack'}); # previous fcodes
 }
 
+# TODO finish handling L<>s -- hyperlink warnings, should alttext *always* be filled?
+
 sub start_L {
     my ($self, $flags) = @_;
     $self->start_fcode('L');
     # keep track of where L<> starts in the paragraph
     # (this is a stack so nested L<>s are handled correctly)
     push $self->{'_fcode_pos'}, length $self->{'_thispara'};
-    my $link = Pod::Hyperlink->new(-page => $flags->{'to'},
-                                   -node => $flags->{'section'},
-                                   -line => $self->{'_line'});
+    my ($page, $node) = @{$flags}{'to', 'section'};
+    my $link = Pod::Hyperlink->new({-page => $page ? "$page" : '', # stringify
+                                    -node => $node ? "$node" : '', # stringify
+                                    -line => $self->{'_line'}});
                                  # -alttext filled in in end_L
-    $self->{'_temp_link'} = $link; # store so end_L can retrieve it
+    $self->{'_temp_link'} = $link; # store it so end_L can retrieve it
 }
 sub end_L {
     my $self = shift;
-    # extract contents of L<>
-    my $ltext = substr($self->{'_thispara'},
-                       pop $self->{'_fcode_pos'}); # start at the beginning of L
+    # extract the link text (alttext) of the L<>
+    my $linktext = substr($self->{'_thispara'},
+                          pop $self->{'_fcode_pos'});
     my $link = $self->{'_temp_link'}; # the link we made in start_L
-    $link->alttext($ltext);
+
+    # Determine if the L<> contained alttext by comparing Pod::Simple's
+    # generated alttext to its default alttext. If they are the same, then the
+    # L<> did not have alttext (or, perhaps, the user supplied alttext is the
+    # same as the default alttext)
+    my ($page, $section) = ($link->page(), $link->node());
+    my $default = ($section ? qq/"$section"/ : '') .
+                  (($page && $section) ? ' in ' : '') .
+                  $page;
+    my $alttext = $linktext eq $default ? '' : $linktext;
+    $link->alttext($alttext);
+
+    # reparse the reconstructed L<> to auto generate warnings
+    my $relink = ($alttext ? "$alttext|" : '') .
+                 $page .
+                 ($section ? qq|/"$section"| : '');
+    use Data::Dumper;
+    warn Dumper($relink);
+
+    $link->parse($relink);
+
+    # output the warnings
+    foreach my $w ($link->warning()) {
+        # it has been decided that the following warning should not be one
+#        next if $w =~ /\(section\) in '.+?' deprecated/;
+        $self->poderror({ -line => $self->{'_line'},
+                          -severity => 'WARNING',
+                          -msg => $w });
+    }
+
     $self->hyperlink([$self->{'_line'}, $link]); # remember link
     $self->end_fcode();
 }
