@@ -779,6 +779,7 @@ sub start_over_bullet { shift->start_over(@_, 'bullet') }
 sub start_over_number { shift->start_over(@_, 'number') }
 sub start_over_text   { shift->start_over(@_, 'definition') }
 sub start_over_block  { shift->start_over(@_, 'block') }
+sub start_over_empty  { shift->start_over(@_, 'empty') }
 sub start_over {
     my $self = shift;
     my $type = pop;
@@ -789,6 +790,7 @@ sub end_over_bullet { shift->_close_list() }
 sub end_over_number { shift->_close_list() }
 sub end_over_text   { shift->_close_list() }
 sub end_over_block  { shift->_close_list() }
+sub end_over_empty  { shift->_close_list() }
 
 sub start_item_bullet { shift->_init_event(@_) }
 sub start_item_number { shift->_init_event(@_) }
