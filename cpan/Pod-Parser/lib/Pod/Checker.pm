@@ -867,58 +867,32 @@ sub end_fcode {
                         $self->{'_fcode_stack'}); # previous fcodes
 }
 
-# TODO finish handling L<>s -- hyperlink warnings, should alttext *always* be filled?
-
 sub start_L {
     my ($self, $flags) = @_;
     $self->start_fcode('L');
-    # keep track of where L<> starts in the paragraph
-    # (this is a stack so nested L<>s are handled correctly)
-    push $self->{'_fcode_pos'}, length $self->{'_thispara'};
-    my ($page, $node) = @{$flags}{'to', 'section'};
-    my $link = Pod::Hyperlink->new({ -page => $page ? "$page" : '', # stringify
-                                     -node => $node ? "$node" : '', # stringify
-                                     -line => $self->{'_line'}});
-                                 # -alttext filled in in end_L
-    $self->{'_temp_link'} = $link; # store it so end_L can retrieve it
-}
-sub end_L {
-    my $self = shift;
-    # extract the link text (alttext) of the L<>
-    my $linktext = substr($self->{'_thispara'},
-                          pop $self->{'_fcode_pos'});
-    my $link = $self->{'_temp_link'}; # the link we made in start_L
 
-    # Determine if the L<> contained alttext by comparing Pod::Simple's
-    # generated alttext to its default alttext. If they are the same, then the
-    # L<> did not have alttext (or, perhaps, the user supplied alttext is the
-    # same as the default alttext)
-    my ($page, $section) = ($link->page(), $link->node());
-    my $default = ($section ? qq/"$section"/ : '') .
-                  (($page && $section) ? ' in ' : '') .
-                  $page;
-    my $alttext = $linktext eq $default ? '' : $linktext;
-    $link->alttext($alttext);
+    # We use Pod::Hyperlink to parse the raw L<> contents into the -alttext,
+    # -page, and -node, but we then use Pod::Simple's parsing to override -page
+    # and -node as Pod::Simple handles them better. An example of this is the
+    # handling of leading/trailing whitespace: Pod::Simple correctly interprets
+    # leading/trailing whitespace to mean the contents are a section, whereas
+    # Pod::Hyperlink removes the whitespace and treats the contents as a page.
+    # Note that we also use Pod::Hyperlink to issue some L<> error checks.
 
-    # reparse the reconstructed L<> to auto generate warnings
-    my $relink = ($alttext ? "$alttext|" : '') .
-                 $page .
-                 ($section ? qq|/"$section"| : '');
-    use Data::Dumper;
-    warn Dumper($relink);
-
-    $link->parse($relink);
-
-    # output the warnings
+    my $link = Pod::Hyperlink->new($flags->{'raw'});
     foreach my $w ($link->warning()) {
-        # it has been decided that the following warning should not be one
-#        next if $w =~ /\(section\) in '.+?' deprecated/;
+        # XXX skip if warning is about deprecated (blah) syntax
         $self->poderror({ -line => $self->{'_line'},
                           -severity => 'WARNING',
                           -msg => $w });
     }
-
+    $link->page($flags->{'to'});
+    $link->node($flags->{'section'});
+    $link->line($self->{'_line'});
     $self->hyperlink([$self->{'_line'}, $link]); # remember link
+}
+sub end_L {
+    my $self = shift;
     $self->end_fcode();
 }
 
