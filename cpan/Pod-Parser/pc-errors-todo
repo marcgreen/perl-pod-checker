@@ -12,19 +12,6 @@ C<"">.
 
 The I<STRING> found cannot be interpreted as a character entity.
 
-=item * malformed link LE<lt>E<gt>
-
-The link found cannot be parsed because it does not conform to the
-syntax described in L<perlpod>.
-
-=item * nonempty ZE<lt>E<gt>
-
-The C<ZE<lt>E<gt>> sequence is supposed to be empty.
-
-=item * empty XE<lt>E<gt>
-
-The index entry specified contains nothing but whitespace.
-
 =back
 
 =head2 Warnings
@@ -140,9 +127,18 @@ C<ZE<lt>E<gt>>
 
 The C<=back> command does not take any arguments.
 
+=item * malformed link LE<lt>E<gt>
+
+The link found cannot be parsed because it does not conform to the
+syntax described in L<perlpod>.
+
+NOTE: THE ONLY MALFORMATION IS AN EMPTY L<>, WHICH POD::SIMPLE ALREADY DOES
+
 =back
 
 =head2 Warnings (reported as errors in Pod::Simple though, fix this)
+
+=over
 
 =item * preceding non-item paragraph(s)
 
@@ -155,3 +151,5 @@ C<=over>/C<=back> block.
 A list started with e.g. a bullet-like C<=item> and continued with a
 numbered one. This is obviously inconsistent. For most translators the
 type of the I<first> C<=item> determines the type of the list.
+
+=back
