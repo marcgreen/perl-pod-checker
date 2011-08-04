@@ -214,6 +214,8 @@ This warning is printed only with warning level greater than one.
 
 =item * line containing nothing but whitespace in paragraph
 
+B<This warning is not yet implemented.>
+
 There is some whitespace on a seemingly empty line. POD is very sensitive
 to such things, so this is flagged. B<vi> users switch on the B<list>
 option to avoid this problem.
@@ -261,6 +263,8 @@ ISO set or the POD specials C<verbar> and C<sol>.
 The list opened with C<=over> does not contain any items.
 
 =item * No argument for =item
+
+B<This warning is not yet implemented.>
 
 C<=item> without any parameters is deprecated. It should either be followed
 by C<*> to indicate an unordered list, by a number (optionally followed
@@ -623,9 +627,9 @@ sub whine {
     # - =item type mismatch
     # - preceding non-item paragraphs
 
-    $self->poderror({-line => $line,
-                     -severity => 'ERROR',
-                     -msg => $complaint });
+    $self->poderror({ -line => $line,
+                      -severity => 'ERROR',
+                      -msg => $complaint });
 
     return 1; # assume everything is peachy keen
 }
@@ -633,9 +637,9 @@ sub whine {
 sub scream {
     my ($self, $line, $complaint) = @_;
 
-    $self->poderror({-line => $line,
-                     -severity => 'ERROR', # consider making severity 'FATAL'
-                     -msg => $complaint });
+    $self->poderror({ -line => $line,
+                      -severity => 'ERROR', # consider making severity 'FATAL'
+                      -msg => $complaint });
 
     return 1;
 }
@@ -666,9 +670,9 @@ sub _close_list {
     my $self = shift;
     my $list = shift @{$self->{'_list_stack'}};
     if (!$list->item()) {
-        $self->poderror({-line => $list->start(),
-                         -severity => 'WARNING',
-                         -msg => 'No items in =over/=back list'});
+        $self->poderror({ -line => $list->start(),
+                          -severity => 'WARNING',
+                          -msg => 'No items in =over/=back list'});
     }
     $list;
 }
@@ -677,9 +681,9 @@ sub _check_fcode {
     my ($self, $inner, $outers) = @_;
     # Check for an fcode inside another of the same fcode
     if ($inner ~~ $outers) {
-        $self->poderror({-line => $self->{'_line'},
-                         -severity => 'ERROR',
-                         -msg => "nested commands $inner<...$inner<...>...>"});
+        $self->poderror({ -line => $self->{'_line'},
+                          -severity => 'ERROR',
+                          -msg => "nested commands $inner<...$inner<...>...>"});
     }
 }
 
@@ -765,9 +769,9 @@ sub end_head  {
     $self->node($arg); # remember this node
 
     if ($arg eq '') {
-        $self->poderror({-line => $self->{'_line'},
-                         -severity => 'ERROR',
-                         -msg => "empty head$h" });
+        $self->poderror({ -line => $self->{'_line'},
+                          -severity => 'ERROR',
+                          -msg => "empty head$h" });
     }
 }
 
@@ -870,9 +874,9 @@ sub start_L {
     # (this is a stack so nested L<>s are handled correctly)
     push $self->{'_fcode_pos'}, length $self->{'_thispara'};
     my ($page, $node) = @{$flags}{'to', 'section'};
-    my $link = Pod::Hyperlink->new({-page => $page ? "$page" : '', # stringify
-                                    -node => $node ? "$node" : '', # stringify
-                                    -line => $self->{'_line'}});
+    my $link = Pod::Hyperlink->new({ -page => $page ? "$page" : '', # stringify
+                                     -node => $node ? "$node" : '', # stringify
+                                     -line => $self->{'_line'}});
                                  # -alttext filled in in end_L
     $self->{'_temp_link'} = $link; # store it so end_L can retrieve it
 }
