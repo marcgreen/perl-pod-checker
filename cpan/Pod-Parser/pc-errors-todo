@@ -66,17 +66,6 @@ definition list.
 
 =over
 
-=item * ignoring leading/trailing whitespace in link
-
-There is whitespace at the beginning or the end of the contents of L<...>.
-
-=item * alternative text/node '%s' contains non-escaped | or /
-
-The characters | and / are special in the L<...> context. Although the hyperlink parser does its best to determine which "/" is text and which is a delimiter in case of doubt, one ought to escape these literal characters like this:
-
-      /     E<sol>
-      |     E<verbar>
-
 =back
 
 =head1 IN POD::SIMPLE ALREADY
