@@ -685,7 +685,7 @@ sub _check_fcode {
     # Check for an fcode inside another of the same fcode
     if ($inner ~~ $outers) {
         $self->poderror({ -line => $self->{'_line'},
-                          -severity => 'ERROR',
+                          -severity => 'WARNING',
                           -msg => "nested commands $inner<...$inner<...>...>"});
     }
 }
