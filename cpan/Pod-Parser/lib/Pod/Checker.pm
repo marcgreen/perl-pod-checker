@@ -623,7 +623,7 @@ sub hyperlink {
 sub whine {
     my ($self, $line, $complaint) = @_;
 
-    # check if complaint is that one error that is supposed to be a warning
+    # XXX check if complaint is that one error that is supposed to be a warning
     # - =item type mismatch
     # - preceding non-item paragraphs
 
@@ -836,9 +836,40 @@ sub end_for {
 }
 
 sub end_Document {
+    # Some final error checks
     my $self = shift;
 
-    # check unresolved internal link thing
+    my %nodes;
+    $nodes{$_}++ for $self->node();
+    # XXX Pod::Checker did something if node had whitespace, or if node was idx
+    #     -- do I need that here?
+
+    # XXX will $link->node() and $self->node() be E<> escaped, etc?
+
+    # XXX update unresolved internal link POD -- single word not enclosed in ""?
+
+    for ($self->hyperlink()) {
+        my ($line, $link) = @$_;
+        # XXX What if there is a link to the page by the name
+        # e.g. in Tk::Pod : L<Tk::Pod/"DESCRIPTION">
+        if ($link->node() && !$link->page()
+            && $link->type() ne 'hyperlink'
+            && !$nodes{$link->node()}) {
+              $self->poderror({ -line => $line || '',
+                                -severity => 'ERROR',
+                                -msg => "unresolved internal link '".
+                                    $link->node() ."'"});
+        }
+    }
+
+    while (my ($node, $count) = each $self->{'_unique_nodes'}) {
+        if ($count > 1) { # not unique
+            $self->poderror({ -line => '-',
+                              -severity => 'WARNING',
+                              -msg => "multiple occurrence of link target '".
+                                  "$node'"});
+        }
+    }
 
     # no POD found here
     $self->num_errors(-1) unless $self->content_seen;
@@ -889,6 +920,7 @@ sub start_L {
     $link->page($flags->{'to'});
     $link->node($flags->{'section'});
     $link->line($self->{'_line'});
+    $link->type('hyperlink') if $flags->{'type'} eq 'url';
     $self->hyperlink([$self->{'_line'}, $link]); # remember link
 }
 sub end_L {
