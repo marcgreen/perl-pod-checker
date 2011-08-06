@@ -321,6 +321,8 @@ these literal characters like this:
 
 =back
 
+Note that the line number of the error/warning is sometimes off by a few.
+
 =head1 RETURN VALUE
 
 B<podchecker> returns the number of POD syntax errors found or -1 if
@@ -915,7 +917,9 @@ sub start_L {
 
     my $link = Pod::Hyperlink->new($flags->{'raw'});
     foreach my $w ($link->warning()) {
-        # XXX skip if warning is about deprecated (blah) syntax
+        # It has been decided that the following should not be a warning
+        # so it is skipped
+        next if $w =~ /^\(section\) in '.+' deprecated$/;
         $self->poderror({ -line => $self->{'_line'},
                           -severity => 'WARNING',
                           -msg => $w });
