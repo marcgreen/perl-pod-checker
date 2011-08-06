@@ -151,13 +151,13 @@ The given link to I<NAME> does not have a matching node in the current
 POD. This also happened when a single word node name is not enclosed in
 C<"">.
 
-=item * Unknown command "I<CMD>"
+=item * Unknown directive: I<CMD>
 
 An invalid POD command has been found. Valid are C<=head1>, C<=head2>,
 C<=head3>, C<=head4>, C<=over>, C<=item>, C<=back>, C<=begin>, C<=end>,
 C<=for>, C<=pod>, C<=cut>
 
-=item * Unknown interior-sequence "I<SEQ>"
+=item * Deleting unknown formatting code I<SEQ>
 
 An invalid markup command has been encountered. Valid are:
 C<BE<lt>E<gt>>, C<CE<lt>E<gt>>, C<EE<lt>E<gt>>, C<FE<lt>E<gt>>,
