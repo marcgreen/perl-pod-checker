@@ -2,12 +2,6 @@
 
 =over 4
 
-=item * unresolved internal link I<NAME>
-
-The given link to I<NAME> does not have a matching node in the current
-POD. This also happened when a single word node name is not enclosed in
-C<"">.
-
 =item * garbled entity I<STRING>
 
 The I<STRING> found cannot be interpreted as a character entity.
@@ -19,12 +13,6 @@ The I<STRING> found cannot be interpreted as a character entity.
 These may not necessarily cause trouble, but indicate mediocre style.
 
 =over 4
-
-=item * multiple occurrence of link target I<name>
-
-The POD file has some C<=item> and/or C<=head> commands that have
-the same text. Potential hyperlinks to such a text cannot be unique then.
-This warning is printed only with warning level greater than one.
 
 =item * line containing nothing but whitespace in paragraph
 
