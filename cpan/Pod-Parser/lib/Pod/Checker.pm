@@ -623,12 +623,15 @@ sub hyperlink {
 sub whine {
     my ($self, $line, $complaint) = @_;
 
-    # XXX check if complaint is that one error that is supposed to be a warning
-    # - =item type mismatch
-    # - preceding non-item paragraphs
+    # XXX test this conversion
+    # Convert errors in Pod::Simple that are warnings in Pod::Checker
+    my $severity = 'ERROR';
+    $severity = 'WARNING' if
+        $complaint =~ /^=item type mismatch/ ||
+        $complaint eq 'preceding non-item paragraph(s)';
 
     $self->poderror({ -line => $line,
-                      -severity => 'ERROR',
+                      -severity => $severity,
                       -msg => $complaint });
 
     return 1; # assume everything is peachy keen
