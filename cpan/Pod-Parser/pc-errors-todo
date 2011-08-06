@@ -2,10 +2,6 @@
 
 =over 4
 
-=item * garbled entity I<STRING>
-
-The I<STRING> found cannot be interpreted as a character entity.
-
 =back
 
 =head2 Warnings
@@ -111,7 +107,12 @@ syntax described in L<perlpod>.
 
 NOTE: THE ONLY MALFORMATION IS AN EMPTY L<>, WHICH POD::SIMPLE ALREADY DOES
 
+=item * garbled entity I<STRING>
+
+The I<STRING> found cannot be interpreted as a character entity.
 =back
+
+NOTE: THIS IS EMULATED BY 'STRANGE CONTENT' ERROR AND 'UNKNOWN E CONTENT' ERROR
 
 =head2 Warnings (reported as errors in Pod::Simple though, fix this)
 
