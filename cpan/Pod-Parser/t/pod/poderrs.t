@@ -17,26 +17,6 @@ exit( ($passed == 1) ? 0 : -1 )  unless $ENV{HARNESS_ACTIVE};
 
 __END__
 
-=pod
-
-L< jump|test/section >
-
-L<>
-
-L<alt|text|no|de/sect|ion>
-
-L<alt/text|no/de/sect/ion>
-
-L<normal>
-
-L< leading>
-
-L<"trailing ">
-
-L< both >
-
-L<man(page)>
-
 =head2 This should cause a warning
 
 =head1 NAME
@@ -72,7 +52,7 @@ F<Many B<fcodes B<inside C<other I<fcodes F<inside I<many S<many C<more X<fcodes
 
 A L<link|perlvar/$/> to L<perlvar/$E<sol>>
 
-A L<nested L<link>>
+A L<nestedL<link>>
 
 =head1 Additional tests
 
@@ -94,17 +74,17 @@ A L<nested L<link>>
 
 =end
 
+=end something
+
 =head2 begin and begin
 
 =begin html
 
 =begin text
 
-=end
+=end text
 
-=end
-
-second one results in end w/o begin
+=end html
 
 =head2 begin w/o formatter
 
