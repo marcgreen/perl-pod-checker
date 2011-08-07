@@ -947,6 +947,11 @@ sub end_X {
     # extract contents of X<>
     my $x = substr($self->{'_thispara'},
                    pop $self->{'_fcode_pos'}); # start at the beginning of X<>
+    unless ($x) {
+        $self->poderror({ -line => $self->{'_line'},
+                          -severity => 'ERROR',
+                          -msg => "An empty X<>" });
+    }
     $self->idx($x); # remember this node
     $self->end_fcode();
 }
