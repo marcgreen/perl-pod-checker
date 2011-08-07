@@ -126,6 +126,10 @@ next heading (C<=head1> or C<=head2>) or the end of the file.
 An C<=item> or C<=back> command has been found outside a
 C<=over>/C<=back> block.
 
+=item * =begin I<TARGET> without matching =end I<TARGET>
+
+A C<=begin> command was found that has no matching =end command.
+
 =item * No argument for =begin
 
 A C<=begin> command was found that is not followed by the formatter
@@ -134,12 +138,6 @@ specification.
 =item * =end without =begin
 
 A standalone C<=end> command was found.
-
-=item * Nested =begin's
-
-There were at least two consecutive C<=begin> commands without
-the corresponding C<=end>. Only one C<=begin> may be active at
-a time.
 
 =item * =for without formatter specification
 
@@ -431,7 +429,7 @@ sub new {
     $new->{'_list_stack'} = [];     # stack for nested lists
     $new->{'_fcode_stack'} = [];    # stack for nested formatting codes
     $new->{'_fcode_pos'} = [];      # stack for position in paragraph of fcodes
-    $new->{'_have_begin'} = '';     # stores =begin
+    $new->{'_begin_stack'} = [];    # stack for =begins: [line #, target]
     $new->{'_links'} = [];          # stack for internal hyperlinks
     $new->{'_index'} = [];          # stack for text in X<>s
 
@@ -821,22 +819,17 @@ sub end_item {
 sub start_for { # =for and =begin directives
     my ($self, $flags) = @_;
     $self->_init_event($flags);
-    if ($self->{'_have_begin'}) {
-        # already have a begin
-        $self->poderror({ -line => $self->{'_line'},
-                          -severity => 'ERROR',
-                          -msg => q{Nested =begin's (first at line } .
-                              $self->{'_have_begin'} . ')'});
-    } else {
-        $self->{'_have_begin'} = $self->{'_line'} .':'. $flags->{'target'};
-    }
+    push $self->{'_begin_stack'}, [$self->{'_line'}, $flags->{'target'}];
 }
 
 sub end_for {
-    my $self = shift;
-    if ($self->{'_have_begin'}) {
-        # close existing =begin
-        $self->{'_have_begin'} = '';
+    my ($self, $flags) = @_;
+    my ($line, $target) = @{pop $self->{'_begin_stack'}};
+    if ($flags->{'fake-closer'}) { # meaning Pod::Simple generated this =end
+        $self->poderror({ -line => $line,
+                          -severity => 'ERROR',
+                          -msg => "=begin $target without matching =end $target"
+                        });
     }
 }
 
