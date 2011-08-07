@@ -924,7 +924,7 @@ sub _ponder_begin {
   $para->[1]{'title'} = $title if ($title);
   $para->[1]{'target'} = $target;  # without any ':'
   $content = $target; # strip off the title
-
+  
   $content =~ s/^:!/!:/s;
   my $neg;  # whether this is a negation-match
   $neg = 1        if $content =~ s/^!//s;
