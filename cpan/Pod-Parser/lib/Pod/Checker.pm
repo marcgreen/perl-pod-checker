@@ -835,8 +835,8 @@ sub start_for { # =for and =begin directives
 sub end_for {
     my $self = shift;
     if ($self->{'_have_begin'}) {
-        # close exisiting =begin
-        $self->{'have_begin'} = '';
+        # close existing =begin
+        $self->{'_have_begin'} = '';
     }
 }
 
