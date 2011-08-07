@@ -789,11 +789,21 @@ sub start_over {
     $self->_init_event(@_);
     $self->_open_list($_[1]{'indent'}, $self->{'_line'}, $type);
 }
-sub end_over_bullet { shift->_close_list() }
-sub end_over_number { shift->_close_list() }
-sub end_over_text   { shift->_close_list() }
-sub end_over_block  { shift->_close_list() }
-sub end_over_empty  { shift->_close_list() }
+sub end_over_bullet { shift->end_over(@_) }
+sub end_over_number { shift->end_over(@_) }
+sub end_over_text   { shift->end_over(@_) }
+sub end_over_block  { shift->end_over(@_) }
+sub end_over_empty  { shift->end_over(@_) }
+sub end_over {
+    my ($self, $flags) = @_;
+    if ($flags->{'fake-closer'}) { # meaning Pod::Simple generated this =back
+        my $line = $self->{'_list_stack'}[0]->start();
+        $self->poderror({ -line => 'EOF',
+                          -severity => 'ERROR',
+                          -msg => "=over on line $line without closing =back"});
+    }
+    $self->_close_list();
+}
 
 sub start_item_bullet { shift->_init_event(@_) }
 sub start_item_number { shift->_init_event(@_) }
