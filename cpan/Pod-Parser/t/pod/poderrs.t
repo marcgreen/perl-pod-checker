@@ -125,8 +125,20 @@ def>
 L<>
 L<   aha>
 L<oho   >
+L<  weehee  >
 L<"Warnings"> this one is ok
 L</unescaped> ok too, this POD has an X of the same name
+
+L<<  lead >>
+L<< trail  >>
+L<< neither >>
+L<<<  both  >>>
+
+L<<<<>>>>
+
+L<<<< >>>>
+
+L<<<<  >>>>
 
 =head2 Warnings
 
