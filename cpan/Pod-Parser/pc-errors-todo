@@ -25,13 +25,6 @@ This is most probably something you do not want.
 
 =end _disabled_
 
-=item * I<N> unescaped C<E<lt>E<gt>> in paragraph
-
-Angle brackets not written as C<E<lt>ltE<gt>> and C<E<lt>gtE<gt>>
-can potentially cause errors as they could be misinterpreted as
-markup commands. This is only printed when the -warnings level is
-greater than 1.
-
 =item * Unknown entity
 
 A character entity was found that does not belong to the standard
