@@ -690,9 +690,27 @@ sub _check_fcode {
     }
 }
 
+sub _check_angles {
+    my ($self, $text) = @_;
+    state $line = '';
+    state $line_num;
+    if ($line eq substr($text, 0, length $line)) {
+        # only check line segments we have not seen yet
+        $line = $text;
+        $line_num = $self->{'_line'}; # note the line we are processing
+    } else {
+        if(my $count = $line =~ tr/<>/<>/) {
+            $self->poderror({ -line => $line_num,
+                              -severity => 'WARNING',
+                              -msg => "$count unescaped <> in paragraph" });
+        }
+        $line = '';
+    }
+}
+
 ##################################
 
-sub handle_text { $_[0]{'_thispara'} .= $_[1] }
+sub handle_text { $_[0]->_check_angles($_[0]{'_thispara'} .= $_[1]) }
 
 ######## Directives
 sub handle_pod_and_cut {
