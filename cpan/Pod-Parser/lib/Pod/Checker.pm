@@ -787,6 +787,8 @@ sub end_head  {
     $self->{'_cmds_since_head'} = 0;
     my $h = $self->{'_head_num'};
 
+    # XXX For some reason if there is an X<> in a =headN, the content of X<>
+    # will be rendered and in $arg
     $self->node($arg); # remember this node
 
     if ($arg eq '') {
@@ -865,6 +867,9 @@ sub end_Document {
     # Some final error checks
     my $self = shift;
 
+    # no POD found here
+    $self->num_errors(-1) && return unless $self->content_seen;
+
     my %nodes;
     $nodes{$_}++ for $self->node();
     # XXX Pod::Checker did something if node had whitespace, or if node was idx
@@ -892,13 +897,10 @@ sub end_Document {
         if ($count > 1) { # not unique
             $self->poderror({ -line => '-',
                               -severity => 'WARNING',
-                              -msg => "multiple occurrence of link target '".
+                              -msg => "multiple occurrences ($count) of link target '".
                                   "$node'"});
         }
     }
-
-    # no POD found here
-    $self->num_errors(-1) unless $self->content_seen;
 }
 
 ########  Formatting codes
