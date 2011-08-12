@@ -411,9 +411,10 @@ sub new {
     $new->{'output_fh'} ||= *STDERR{IO};
 
     # Set options
-    $new->{'-warnings'} = defined $_{'-warnings'} ?
-                                  $_{'-warnings'} : 1; # default on
-    $new->{'-quiet'} = $_{'-quiet'} || 0; # default off
+    my %opts = @_;
+    $new->{'-warnings'} = defined $opts{'-warnings'} ?
+                                  $opts{'-warnings'} : 1; # default on
+    $new->{'-quiet'} = $opts{'-quiet'} || 0; # default off
 
     # Initialize number of errors/warnings
     $new->{'_NUM_ERRORS'} = 0;
