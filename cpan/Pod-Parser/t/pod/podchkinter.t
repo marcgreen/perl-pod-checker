@@ -5,7 +5,9 @@ use 5.14.0;
 use Pod::Checker;
 use Data::Dumper;
 use Test::More;
-BEGIN { plan tests => 74 };
+BEGIN { plan tests => 82 };
+
+my ($infile, $outfile) = ("tempin.tmp", "tempout.tmp"); 
 
 my $pods = [
     {in   => "=head2 easy warning\n\nX<random>",
@@ -44,8 +46,6 @@ while (my ($i, $pod) = each @$pods) {
     $hlnk //= [];
     $errs //= 0;
     $warn //= 0;
-
-    my ($infile, $outfile) = ("tempin.tmp", "tempout.tmp"); 
 
     # populate the infile
     open(my $infh, '>', $infile) or die $!;
@@ -105,7 +105,7 @@ while (my ($i, $pod) = each @$pods) {
     open($outfh, '<', $outfile);
     my $pff_output2 = <$outfh>;
     $pff_output2 =~ s/GLOB\(\w+\)$/$infile/g if $pff_output2;
-      # normalize file name
+      # normalize file name to have outputs match
     close $outfh;
     close $infh;
     unlink $outfile;
@@ -125,15 +125,41 @@ while (my ($i, $pod) = each @$pods) {
     is($pc_output1,  $pc_output2,  "pc scalar vs pc fh - iter.$i");
     is($pff_output1, $pc_output1,  "pff scalar vs pc scalar - iter.$i");
 
+    # test %options
+    unlink($outfile);
+    podchecker($infile, $outfile, '-quiet' => 1 );
+    ok(-z $outfile, 'no errors/warnings - iter.$i');
+    # warnings goes here, I guess
+
     unlink($infile, $outfile);
 
 }
 
+# test external use of poderror
+open(my $fh, '>', $infile);
+print $fh "=pod\n\n=head1 a heading\n\nsome content\n\n=cut";
+close $fh;
+my $pc = Pod::Checker->new();
+$pc->parse_from_file($infile, $outfile);
+ok(-z $outfile, 'no errors yet');
+my $msg = 'The British are coming! The British are coming!';
+$pc->poderror({ -line => 10, -file => 'a.file',
+                -severity => 'URGENT',
+                -msg => $msg });
+close $fh;
+undef $pc; # GC
+open($fh, '<', $outfile);
+my $got = do { local $/; <$fh> };
+my $expect = "*** URGENT: $msg at line 10 in file a.file\n";
+is($got, $expect, 'external use of poderror()');
+
+unlink($infile, $outfile);
+
 # check -warnings off/on
-# check -quiet off/on
-# check poderror() usage (use to issue fake warnings for above)
 
 # DONE
+# check poderror() usage (use to issue fake warnings for above)
+# check -quiet off/on
 # check filepath vs open filehandle
 # check podchecker() vs new Pod::Checker->parse_from_file
 # check return value (-1 vs #errors)
