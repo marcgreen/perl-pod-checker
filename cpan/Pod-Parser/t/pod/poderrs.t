@@ -179,7 +179,7 @@ This paragrapgh is misplaced - it ought to be an item.
 
 =over
 
-    This verbatim paragraph should not be here
+    This verbatim paragraph should not be here. Spaces are on the line below this
     
 =item *
 

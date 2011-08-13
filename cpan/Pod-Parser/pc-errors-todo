@@ -10,12 +10,6 @@ These may not necessarily cause trouble, but indicate mediocre style.
 
 =over 4
 
-=item * line containing nothing but whitespace in paragraph
-
-There is some whitespace on a seemingly empty line. POD is very sensitive
-to such things, so this is flagged. B<vi> users switch on the B<list>
-option to avoid this problem.
-
 =begin _disabled_
 
 =item * file does not start with =head
