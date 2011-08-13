@@ -437,6 +437,7 @@ sub new {
     $new->accept_targets('*'); # check all =begin/=for blocks
     $new->cut_handler( \&handle_pod_and_cut ); # warn if text after =cut
     $new->pod_handler( \&handle_pod_and_cut ); # warn if text after =pod
+    $new->whiteline_handler( \&handle_whiteline ); # warn if whiteline
     $new->parse_empty_lists(1); # warn if they are empty
 
     return $new;
@@ -712,6 +713,15 @@ sub _check_angles {
 ##################################
 
 sub handle_text { $_[0]->_check_angles($_[0]{'_thispara'} .= $_[1]) }
+
+# whiteline is a seemingly blank line that matches /[\t ]/
+sub handle_whiteline {
+    my ($line, $line_n, $self) = @_;
+    $self->poderror({
+        -line => $line_n,
+        -severity => 'WARNING',
+        -msg => 'line containing nothing but whitespace in paragraph'});
+}
 
 ######## Directives
 sub handle_pod_and_cut {
