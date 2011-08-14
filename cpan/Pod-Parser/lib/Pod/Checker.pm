@@ -212,20 +212,9 @@ This warning is printed only with warning level greater than one.
 
 =item * line containing nothing but whitespace in paragraph
 
-B<This warning is not yet implemented.>
-
 There is some whitespace on a seemingly empty line. POD is very sensitive
 to such things, so this is flagged. B<vi> users switch on the B<list>
 option to avoid this problem.
-
-=begin _disabled_
-
-=item * file does not start with =head
-
-The file starts with a different POD directive than head.
-This is most probably something you do not want.
-
-=end _disabled_
 
 =item * previous =item has no contents
 
@@ -256,18 +245,9 @@ greater than 1.
 A character entity was found that does not belong to the standard
 ISO set or the POD specials C<verbar> and C<sol>.
 
-=item * No items in =over
+=item * empty =over/=back block
 
-The list opened with C<=over> does not contain any items.
-
-=item * No argument for =item
-
-B<This warning is not yet implemented.>
-
-C<=item> without any parameters is deprecated. It should either be followed
-by C<*> to indicate an unordered list, by a number (optionally followed
-by a dot) to indicate an ordered (numbered) list or simple text for a
-definition list.
+The list opened with C<=over> does not contain anything.
 
 =item * empty section in previous paragraph
 
@@ -298,14 +278,6 @@ There are some warnings with respect to malformed hyperlinks:
 
 There is whitespace at the beginning or the end of the contents of
 LE<lt>...E<gt>.
-
-=item * (section) in '$page' deprecated
-
-There is a section detected in the page name of LE<lt>...E<gt>, e.g.
-C<LE<lt>passwd(2)E<gt>>. POD hyperlinks may point to POD documents only.
-Please write C<CE<lt>passwd(2)E<gt>> instead. Some formatters are able
-to expand this to appropriate code. For links to (builtin) functions,
-please say C<LE<lt>perlfunc/mkdirE<gt>>, without ().
 
 =item * alternative text/node '%s' contains non-escaped | or /
 
@@ -671,16 +643,7 @@ sub _open_list { # keep track of =open/=back blocks
     $list;
 }
 
-sub _close_list { 
-    my $self = shift;
-    my $list = shift @{$self->{'_list_stack'}};
-    if (!$list->item()) {
-        $self->poderror({ -line => $list->start(),
-                          -severity => 'WARNING',
-                          -msg => 'No items in =over/=back list'});
-    }
-    $list;
-}
+sub _close_list { shift @{shift->{'_list_stack'}} }
 
 sub _check_fcode {
     my ($self, $inner, $outers) = @_;
@@ -813,7 +776,13 @@ sub start_over_bullet { shift->start_over(@_, 'bullet') }
 sub start_over_number { shift->start_over(@_, 'number') }
 sub start_over_text   { shift->start_over(@_, 'definition') }
 sub start_over_block  { shift->start_over(@_, 'block') }
-sub start_over_empty  { shift->start_over(@_, 'empty') }
+sub start_over_empty  {
+    my $self = shift;
+    $self->start_over(@_, 'empty');
+    $self->poderror({ -line => $self->{'_line'},
+                      -severity => 'WARNING',
+                      -msg => 'empty =over/=back block' });
+}
 sub start_over {
     my $self = shift;
     my $type = pop;
