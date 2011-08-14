@@ -19,18 +19,6 @@ This is most probably something you do not want.
 
 =end _disabled_
 
-=item * Unknown entity
-
-A character entity was found that does not belong to the standard
-ISO set or the POD specials C<verbar> and C<sol>.
-
-=item * No argument for =item
-
-C<=item> without any parameters is deprecated. It should either be followed
-by C<*> to indicate an unordered list, by a number (optionally followed
-by a dot) to indicate an ordered (numbered) list or simple text for a
-definition list.
-
 =back
 
 =head2 Hyperlinks
