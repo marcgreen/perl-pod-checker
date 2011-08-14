@@ -435,8 +435,8 @@ The line number the error occurred in.
 
   -file
 
-The file (name) the error occurred in. Defaults to the value of
-C<Pod::Simple->source_filename>.
+The file (name) the error occurred in. Defaults to the name of the current
+file being processed.
 
   -severity
 
@@ -657,6 +657,8 @@ sub _check_fcode {
 
 sub _check_angles {
     my ($self, $text) = @_;
+    return unless $self->{'-warnings'} > 1;
+
     state $line = '';
     state $line_num;
     if ($line eq substr($text, 0, length $line)) {
@@ -664,7 +666,7 @@ sub _check_angles {
         $line = $text;
         $line_num = $self->{'_line'}; # note the line we are processing
     } else {
-        if(my $count = $line =~ tr/<>/<>/) {
+        if (my $count = $text =~ tr/<>/<>/) {
             $self->poderror({ -line => $line_num,
                               -severity => 'WARNING',
                               -msg => "$count unescaped <> in paragraph" });
@@ -873,12 +875,15 @@ sub end_Document {
         }
     }
 
-    while (my ($node, $count) = each $self->{'_unique_nodes'}) {
-        if ($count > 1) { # not unique
-            $self->poderror({ -line => '-',
-                              -severity => 'WARNING',
-                              -msg => "multiple occurrences ($count) of link target '".
-                                  "$node'"});
+    if ($self->{'-warnings'} > 1 ) {
+        while (my ($node, $count) = each $self->{'_unique_nodes'}) {
+            if ($count > 1) { # not unique
+                $self->poderror({
+                    -line => '-',
+                    -severity => 'WARNING',
+                    -msg => "multiple occurrences ($count) of link target ".
+                        "'$node'"});
+            }
         }
     }
 }

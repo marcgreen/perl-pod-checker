@@ -5,7 +5,7 @@ use 5.14.0;
 use Pod::Checker;
 use Data::Dumper;
 use Test::More;
-BEGIN { plan tests => 82 };
+BEGIN { plan tests => 85 };
 
 my ($infile, $outfile) = ("tempin.tmp", "tempout.tmp"); 
 
@@ -129,10 +129,8 @@ while (my ($i, $pod) = each @$pods) {
     unlink($outfile);
     podchecker($infile, $outfile, '-quiet' => 1 );
     ok(-z $outfile, 'no errors/warnings - iter.$i');
-    # warnings goes here, I guess
 
     unlink($infile, $outfile);
-
 }
 
 # test external use of poderror
@@ -155,17 +153,23 @@ is($got, $expect, 'external use of poderror()');
 
 unlink($infile, $outfile);
 
-# check -warnings off/on
+# test -warnings = 0, 1, >1
+open($fh, '>', $infile);
+print $fh "=head2 a warning\n\nan X<> error\n\na warning: < < <";
+close $fh;
+for my $warning (0..2) {
+    podchecker($infile, $outfile, '-warnings' => $warning);
 
-# DONE
-# check poderror() usage (use to issue fake warnings for above)
-# check -quiet off/on
-# check filepath vs open filehandle
-# check podchecker() vs new Pod::Checker->parse_from_file
-# check return value (-1 vs #errors)
-# check num_errors
-# check num_warnings
-# name
-# node
-# idx
-# hyperlink
+    # if -warnings > 1, there are 3 errors/warnings reported
+    # if -warnings = 1, there are 2 errors/warnings reported
+    # if -warnings = 0, there is 1 error reported
+    open($fh, '<', $outfile);
+    my $count = 0;
+    $count++ while <$fh>;
+    close $fh;
+
+    is($count, $warning + 1, 'number of warnings reported');
+    unlink $outfile;
+}
+
+unlink $infile;
