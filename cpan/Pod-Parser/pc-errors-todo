@@ -33,11 +33,6 @@ This is most probably something you do not want.
 
 =over
 
-=item * =over on line I<N> without closing =back
-
-The C<=over> command does not have a corresponding C<=back> before the
-next heading (C<=head1> or C<=head2>) or the end of the file.
-
 =item * =item without previous =over
 
 =item * =back without previous =over

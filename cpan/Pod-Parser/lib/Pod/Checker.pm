@@ -116,30 +116,54 @@ heading!
 
 =item * =over on line I<N> without closing =back
 
+=item * You forgot a '=back' before '=headI<N>'
+
+=item * =over is the last thing in the document?!
+
 The C<=over> command does not have a corresponding C<=back> before the
 next heading (C<=head1> or C<=head2>) or the end of the file.
 
-=item * =item without previous =over
+=item * '=item' outside of any '=over'
 
-=item * =back without previous =over
+=item * =back without =over
 
 An C<=item> or C<=back> command has been found outside a
 C<=over>/C<=back> block.
+
+=item * Can't have a 0 in =over I<N>
+
+You need to indent a strictly positive number of spaces, not 0.
+
+=item * =over should be: '=over' or '=over positive_number'
+
+Either have an argumentless =over, or have its argument a strictly positive number.
 
 =item * =begin I<TARGET> without matching =end I<TARGET>
 
 A C<=begin> command was found that has no matching =end command.
 
-=item * No argument for =begin
+=item * =begin without a target?
 
 A C<=begin> command was found that is not followed by the formatter
 specification.
 
-=item * =end without =begin
+=item * =end I<TARGET> without matching =begin.
 
 A standalone C<=end> command was found.
 
-=item * =for without formatter specification
+=item * '=end' without a target?
+
+'=end' directives need to have a target, just like =begin directives.
+
+=item * '=end I<TARGET>' is invalid.
+
+I<TARGET> needs to be one word
+
+=item * =end I<TARGET> doesn't match =begin.
+
+I<TARGET> needs to match =begin's target
+
+=item * =for without a target?
 
 There is no specification of the formatter after the C<=for> command.
 
@@ -162,29 +186,28 @@ C<BE<lt>E<gt>>, C<CE<lt>E<gt>>, C<EE<lt>E<gt>>, C<FE<lt>E<gt>>,
 C<IE<lt>E<gt>>, C<LE<lt>E<gt>>, C<SE<lt>E<gt>>, C<XE<lt>E<gt>>,
 C<ZE<lt>E<gt>>
 
+=item * Unterminated I<SEQ>E<lt>E<gt> sequence
+
+An unclosed formatting code
+
 =item * nested commands I<CMD>E<lt>...I<CMD>E<lt>...E<gt>...E<gt>
 
 Two nested identical markup commands have been found. Generally this
 does not make sense.
 
-=item * garbled entity I<STRING>
+=item * An EE<lt>...E<gt> surrounding strange content
 
 The I<STRING> found cannot be interpreted as a character entity.
 
-=item * Entity number out of range
+=item * An empty L<>
 
-An entity specified by number (dec, hex, oct) is out of range (1-255).
+There needs to be content inside an L<> formatting code.
 
-=item * malformed link LE<lt>E<gt>
-
-The link found cannot be parsed because it does not conform to the
-syntax described in L<perlpod>.
-
-=item * nonempty ZE<lt>E<gt>
+=item * A non-empty ZE<lt>E<gt>
 
 The C<ZE<lt>E<gt>> sequence is supposed to be empty.
 
-=item * empty XE<lt>E<gt>
+=item * An empty XE<lt>E<gt>
 
 The index entry specified contains nothing but whitespace.
 
@@ -192,9 +215,21 @@ The index entry specified contains nothing but whitespace.
 
 The commands C<=pod> and C<=cut> do not take any arguments.
 
-=item * Spurious character(s) after =back
+=item * =back doesn't take any parameters, but you said =back I<ARGUMENT>
 
 The C<=back> command does not take any arguments.
+
+=item * =pod directives shouldn't be over one line long!  Ignoring all I<N> lines of content
+
+Self explanatory
+
+=item * =cut found outside a pod block.
+
+A '=cut' directive found in the middle of non-POD
+
+=item * Invalid =encoding syntax: I<CONTENT>
+
+Syntax error in =encoding directive
 
 =back
 
@@ -216,22 +251,30 @@ There is some whitespace on a seemingly empty line. POD is very sensitive
 to such things, so this is flagged. B<vi> users switch on the B<list>
 option to avoid this problem.
 
-=item * previous =item has no contents
+=item * =item has no contents
 
-There is a list C<=item> right above the flagged line that has no
-text contents. You probably want to delete empty items.
+There is a list C<=item> that has no text contents. You probably want to delete
+empty items.
 
-=item * preceding non-item paragraph(s)
+=item * You can't have =items (as at line I<N>) unless the first thing after the =over is an =item
 
 A list introduced by C<=over> starts with a text or verbatim paragraph,
 but continues with C<=item>s. Move the non-item paragraph out of the
 C<=over>/C<=back> block.
 
-=item * =item type mismatch (I<one> vs. I<two>)
+=item * Expected '=item I<EXPECTED VALUE>'
+
+=item * Expected '=item *'
 
 A list started with e.g. a bullet-like C<=item> and continued with a
 numbered one. This is obviously inconsistent. For most translators the
 type of the I<first> C<=item> determines the type of the list.
+
+=item * You have '=item x' instead of the expected '=item I<N>'
+
+Erroneous numbering of =item numbers
+
+XXX make the above a warning not an error in whine()
 
 =item * I<N> unescaped C<E<lt>E<gt>> in paragraph
 
@@ -240,10 +283,12 @@ can potentially cause errors as they could be misinterpreted as
 markup commands. This is only printed when the -warnings level is
 greater than 1.
 
-=item * Unknown entity
+=item * Unknown E content in EE<lt>I<CONTENT>E<gt>
 
 A character entity was found that does not belong to the standard
-ISO set or the POD specials C<verbar> and C<sol>.
+ISO set or the POD specials C<verbar> and C<sol>. I<Currently, this warning
+only appears if a character entity was found that does not have a Unicode
+character. This should be fixed to adhere to the original warning.>
 
 =item * empty =over/=back block
 
