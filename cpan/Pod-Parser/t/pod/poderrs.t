@@ -191,7 +191,53 @@ number, uh oh
 
 =back
 
-All empty over/back:
+=over
+
+=item *
+
+first bullet
+
+=item 1
+
+then number
+
+=item finally definition
+
+=back
+
+=over
+
+=item 1
+
+first number
+
+=item 3
+
+bad numbering
+
+=item then definition
+
+=item *
+
+finally bullet
+
+=back
+
+=over
+
+=item first defintion
+
+=item *
+
+then bullet
+
+=item 1
+
+finally number
+
+=back
+
+Empty over/back:
 
 =over 4
 
@@ -242,6 +288,8 @@ trigger a podchecker warning (using bleadperl) :
 =head1
 
 Empty head above and unclosed over/begins below
+
+=head3 test X<stuff> I<test>
 
 =over
 
