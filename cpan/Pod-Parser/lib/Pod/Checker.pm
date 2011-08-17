@@ -570,6 +570,7 @@ collapsed to a single blank.
 sub node {
     my ($self,$text) = @_;
     if(defined $text) {
+        $text =~ s/\s+$//s; # strip trailing whitespace
         $text =~ s/\s+/ /gs; # collapse whitespace
         # add node, order important!
         push(@{$self->{'_nodes'}}, $text);
@@ -594,6 +595,7 @@ of whitespace is collapsed to a single blank.
 sub idx {
     my ($self,$text) = @_;
     if(defined $text) {
+        $text =~ s/\s+$//s; # strip trailing whitespace
         $text =~ s/\s+/ /gs; # collapse whitespace
         # add node, order important!
         push(@{$self->{'_index'}}, $text);
@@ -724,6 +726,8 @@ sub _check_angles {
 sub handle_text { $_[0]->_check_angles($_[0]{'_thispara'} .= $_[1]) }
 
 # whiteline is a seemingly blank line that matches /[\t ]/
+# XXX too strict -- should only warn if whiteline is at end of paragraph (what is that?)
+# or is it?
 sub handle_whiteline {
     my ($line, $line_n, $self) = @_;
     $self->poderror({
@@ -804,18 +808,7 @@ sub end_head  {
     my $arg = $self->{'_head_text'} = $self->{'_thispara'};
     $self->{'_cmds_since_head'} = 0;
     my $h = $self->{'_head_num'};
-
-    #warn $arg;
-
-    # XXX Fcodes have their content extracted and placed in $arg.
-    # This is bad news for X<...>, as that should not be visible
-    # also, L<>s should be formatted differently 
-    # splice '_thispara' in end_X maybe
-    # OR, have each fcode generate text (L would be 'Y in Z')
-    #  and X would be '', and use that to make up _thispara
-    # test this in podchkinter.t
     $self->node($arg); # remember this node
-
     if ($arg eq '') {
         $self->poderror({ -line => $self->{'_line'},
                           -severity => 'ERROR',
@@ -882,8 +875,7 @@ sub end_item {
 
     my $list = $self->{'_list_stack'}->[0];
     $list->item($self->{'_thispara'}); # add item to list
-    # XXX compare new pod::checker interface to old one
-    # specifically, are there leading *s and numbers in item()s?
+    # XXX add tests to podchkinter.t for =item and node()
 
     $self->node($self->{'_thispara'}); # remember this node
 }
@@ -913,13 +905,21 @@ sub end_Document {
     $self->num_errors(-1) && return unless $self->content_seen;
 
     my %nodes;
-    $nodes{$_}++ for $self->node();
-    # XXX Pod::Checker did something if node had whitespace, or if node was idx
-    #     -- do I need that here?
-
-    # XXX will $link->node() and $self->node() be E<> escaped, etc?
+    for ($self->node()) {
+        $nodes{$_} = 1;
+        if(/^(\S+)\s+\S/) {
+            # we have more than one word. Use the first as a node, too.
+            # This is used heavily in perlfunc.pod
+            $nodes{$1} ||= 2; # derived node
+        }
+    }
+    for ($self->idx()) {
+        $nodes{$_} = 3; # index node
+    }
 
     # XXX update unresolved internal link POD -- single word not enclosed in ""?
+    # I don't know what I was thinking when I made the above TODO, and I don't
+    # know what it means
 
     for ($self->hyperlink()) {
         my ($line, $link) = @$_;
@@ -1012,9 +1012,10 @@ sub start_X {
 }
 sub end_X {
     my $self = shift;
-    # extract contents of X<>
-    my $x = substr($self->{'_thispara'},
-                   pop $self->{'_fcode_pos'}); # start at the beginning of X<>
+    # extract contents of X<> and replace with ''
+    my $start = pop $self->{'_fcode_pos'}; # start at the beginning of X<>
+    my $end = length($self->{'_thispara'}) - $start; # end at end of X<>
+    my $x = substr($self->{'_thispara'}, $start, $end, '');
     unless ($x) {
         $self->poderror({ -line => $self->{'_line'},
                           -severity => 'ERROR',
