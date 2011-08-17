@@ -266,15 +266,15 @@ C<=over>/C<=back> block.
 
 =item * Expected '=item *'
 
+=item * Possible =item type mismatch: 'I<x>' found leading a supposed definition =item
+
 A list started with e.g. a bullet-like C<=item> and continued with a
 numbered one. This is obviously inconsistent. For most translators the
 type of the I<first> C<=item> determines the type of the list.
 
 =item * You have '=item x' instead of the expected '=item I<N>'
 
-Erroneous numbering of =item numbers
-
-XXX make the above a warning not an error in whine()
+Erroneous numbering of =item numbers; they need to ascend consecutively.
 
 =item * I<N> unescaped C<E<lt>E<gt>> in paragraph
 
@@ -570,7 +570,6 @@ collapsed to a single blank.
 sub node {
     my ($self,$text) = @_;
     if(defined $text) {
-        $text =~ s/\s+$//s; # strip trailing whitespace
         $text =~ s/\s+/ /gs; # collapse whitespace
         # add node, order important!
         push(@{$self->{'_nodes'}}, $text);
@@ -595,7 +594,6 @@ of whitespace is collapsed to a single blank.
 sub idx {
     my ($self,$text) = @_;
     if(defined $text) {
-        $text =~ s/\s+$//s; # strip trailing whitespace
         $text =~ s/\s+/ /gs; # collapse whitespace
         # add node, order important!
         push(@{$self->{'_index'}}, $text);
@@ -642,12 +640,13 @@ sub hyperlink {
 sub whine {
     my ($self, $line, $complaint) = @_;
 
-    # XXX test this conversion
     # Convert errors in Pod::Simple that are warnings in Pod::Checker
+    # XXX Do differently so the $complaint can be reworded without this breaking
     my $severity = 'ERROR';
     $severity = 'WARNING' if
-        $complaint =~ /^=item type mismatch/ ||
-        $complaint eq 'preceding non-item paragraph(s)';
+        $complaint =~ /^Expected '=item .+?'$/ ||
+        $complaint =~ /^You can't have =items \(as at line .+?\) unless the first thing after the =over is an =item$/ ||
+        $complaint =~ /^You have '=item .+?' instead of the expected '=item .+?'$/;
 
     $self->poderror({ -line => $line,
                       -severity => $severity,
@@ -802,14 +801,19 @@ sub end_head3 { shift->end_head(@_) }
 sub end_head4 { shift->end_head(@_) }
 sub end_head  {
     my $self = shift;
-    # $arg is for convenience
-    # XXX: is the s/// necessary? test this and remove here and in item methods
-    my $arg = $self->{'_head_text'} = $self->{'_thispara'} =~ s/\s+$//r;
+    my $arg = $self->{'_head_text'} = $self->{'_thispara'};
     $self->{'_cmds_since_head'} = 0;
     my $h = $self->{'_head_num'};
 
-    # XXX For some reason if there is an X<> in a =headN, the content of X<>
-    # will be rendered and in $arg
+    #warn $arg;
+
+    # XXX Fcodes have their content extracted and placed in $arg.
+    # This is bad news for X<...>, as that should not be visible
+    # also, L<>s should be formatted differently 
+    # splice '_thispara' in end_X maybe
+    # OR, have each fcode generate text (L would be 'Y in Z')
+    #  and X would be '', and use that to make up _thispara
+    # test this in podchkinter.t
     $self->node($arg); # remember this node
 
     if ($arg eq '') {
@@ -855,21 +859,32 @@ sub end_over {
 sub start_item_bullet { shift->_init_event(@_) }
 sub start_item_number { shift->_init_event(@_) }
 sub start_item_text   { shift->_init_event(@_) }
-sub end_item_bullet { shift->end_item() }
-    # XXX If =item has no argument, it is assumed to be a bullet
-    #       - how do I issue warning? modify BlackBox?
-sub end_item_number { shift->end_item() }
-sub end_item_text   { shift->end_item() }
+sub end_item_bullet { shift->end_item('bullet') }
+sub end_item_number { shift->end_item('number') }
+sub end_item_text   { shift->end_item('definition') }
 sub end_item {
     my $self = shift;
+    my $type = shift;
     if (!$self->{'_thispara'}) {
         $self->poderror({ -line => $self->{'_line'},
                           -severity => 'WARNING',
                           -msg => '=item has no contents' });
     }
 
+    # warn if type is of definition but content starts with digit or '*'
+    # the other cases are taken care of in Pod::Simple
+    if ($type eq 'definition' && $self->{'_thispara'} =~ /^([*\d])/) {
+        $self->poderror({ -line => $self->{'_line'},
+                          -severity => 'WARNING',
+                          -msg => "Possible =item type mismatch: '$1' found ".
+                              "leading a supposed definition =item" });
+    }
+
     my $list = $self->{'_list_stack'}->[0];
     $list->item($self->{'_thispara'}); # add item to list
+    # XXX compare new pod::checker interface to old one
+    # specifically, are there leading *s and numbers in item()s?
+
     $self->node($self->{'_thispara'}); # remember this node
 }
 
