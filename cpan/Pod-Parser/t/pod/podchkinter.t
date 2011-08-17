@@ -5,14 +5,14 @@ use 5.14.0;
 use Pod::Checker;
 use Data::Dumper;
 use Test::More;
-BEGIN { plan tests => 85 };
+BEGIN { plan tests => 88 };
 
 my ($infile, $outfile) = ("tempin.tmp", "tempout.tmp"); 
 
 my $pods = [
-    {in   => "=head2 easy warning\n\nX<random>",
+    {in   => "=head2 easy X<id> warning\n\nX<random>",
      node => ["easy warning"],
-     idx  => ["random"],
+     idx  => [qw/id random/],
      warn => 1,
     },
     {in   => "=head1 h1\n\n=head2 h2\n\n=over\n\n=item i1\n\n=item i2\n\n=back",
@@ -34,6 +34,7 @@ my $pods = [
      idx  => [qw/i1 i2 i3/],
      errs => 2,
      warn => 2,
+     node => ['', 'h1'],
     },
 ];
 
