@@ -159,9 +159,9 @@ A standalone C<=end> command was found.
 
 I<TARGET> needs to be one word
 
-=item * =end I<TARGET> doesn't match =begin.
+=item * =end I<CONTENT> doesn't match =begin I<TARGET>
 
-I<TARGET> needs to match =begin's target
+I<CONTENT> needs to match =begin's I<TARGET>.
 
 =item * =for without a target?
 
@@ -190,26 +190,21 @@ C<ZE<lt>E<gt>>
 
 An unclosed formatting code
 
-=item * nested commands I<CMD>E<lt>...I<CMD>E<lt>...E<gt>...E<gt>
-
-Two nested identical markup commands have been found. Generally this
-does not make sense.
-
 =item * An EE<lt>...E<gt> surrounding strange content
 
 The I<STRING> found cannot be interpreted as a character entity.
 
+=item * An empty EE<lt>E<gt>
+
 =item * An empty L<>
 
-There needs to be content inside an L<> formatting code.
+=item * An empty XE<lt>E<gt>
+
+There needs to be content inside E, L, and X formatting codes.
 
 =item * A non-empty ZE<lt>E<gt>
 
 The C<ZE<lt>E<gt>> sequence is supposed to be empty.
-
-=item * An empty XE<lt>E<gt>
-
-The index entry specified contains nothing but whitespace.
 
 =item * Spurious text after =pod / =cut
 
@@ -239,7 +234,12 @@ These may not necessarily cause trouble, but indicate mediocre style.
 
 =over 4
 
-=item * multiple occurrence of link target I<name>
+=item * nested commands I<CMD>E<lt>...I<CMD>E<lt>...E<gt>...E<gt>
+
+Two nested identical markup commands have been found. Generally this
+does not make sense.
+
+=item * multiple occurrences (I<N>) of link target I<name>
 
 The POD file has some C<=item> and/or C<=head> commands that have
 the same text. Potential hyperlinks to such a text cannot be unique then.
@@ -810,7 +810,7 @@ sub end_head  {
     if ($arg eq '') {
         $self->poderror({ -line => $self->{'_line'},
                           -severity => 'ERROR',
-                          -msg => "empty head$h" });
+                          -msg => "empty =head$h" });
     }
 }
 
