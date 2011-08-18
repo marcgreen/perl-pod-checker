@@ -725,9 +725,7 @@ sub _check_angles {
 
 sub handle_text { $_[0]->_check_angles($_[0]{'_thispara'} .= $_[1]) }
 
-# whiteline is a seemingly blank line that matches /[\t ]/
-# XXX too strict -- should only warn if whiteline is at end of paragraph (what is that?)
-# or is it?
+# whiteline is a seemingly blank line that matches /[^\S\r\n]/
 sub handle_whiteline {
     my ($line, $line_n, $self) = @_;
     $self->poderror({
@@ -875,7 +873,6 @@ sub end_item {
 
     my $list = $self->{'_list_stack'}->[0];
     $list->item($self->{'_thispara'}); # add item to list
-    # XXX add tests to podchkinter.t for =item and node()
 
     $self->node($self->{'_thispara'}); # remember this node
 }
@@ -919,7 +916,7 @@ sub end_Document {
 
     # XXX update unresolved internal link POD -- single word not enclosed in ""?
     # I don't know what I was thinking when I made the above TODO, and I don't
-    # know what it means
+    # know what it means...
 
     for ($self->hyperlink()) {
         my ($line, $link) = @$_;
