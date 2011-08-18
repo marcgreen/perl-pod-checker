@@ -5,7 +5,7 @@ use 5.14.0;
 use Pod::Checker;
 use Data::Dumper;
 use Test::More;
-BEGIN { plan tests => 88 };
+BEGIN { plan tests => 104 };
 
 my ($infile, $outfile) = ("tempin.tmp", "tempout.tmp"); 
 
@@ -29,12 +29,20 @@ my $pods = [
     },
     {in   => "=over\n\n=item *\n\nno closing back!",
      errs => 1,
+     node => ['no closing back!'],
     },
     {in   => "=head2\n\n=head1 h1X<i1>\n\nU<unrecognized> X<i2> X<i3>\n\n>",
      idx  => [qw/i1 i2 i3/],
      errs => 2,
      warn => 2,
      node => ['', 'h1'],
+    },
+    {in   => "=over\n\n=item 1\n\nnumber1\n\ntext\n\n=back\n\n".
+# not valid syntax "=over\n\n=item 1 number2\n\ntext\n\n=back\n\n".         
+             "=over\n\n=item *\n\nbullet1\n\ntext\n\n=back\n\n".
+             "=over\n\n=item * bullet2\n\ntext\n\n=back\n\n".
+             "=over\n\n=item definition\n\ntext\n\n=back\n\n",
+     node => [qw/number1 bullet1 bullet2 definition/],
     },
 ];
 
