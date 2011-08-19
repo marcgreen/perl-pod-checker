@@ -280,8 +280,10 @@ Erroneous numbering of =item numbers; they need to ascend consecutively.
 
 Angle brackets not written as C<E<lt>ltE<gt>> and C<E<lt>gtE<gt>>
 can potentially cause errors as they could be misinterpreted as
-markup commands. This is only printed when the -warnings level is
-greater than 1.
+markup commands. This warning will be triggered on invalid
+formatting codes (e.g., C<EE<gt>...LE<gt>...E<lt>E<lt>>), FYI.
+
+This is only printed when the -warnings level is greater than 1.
 
 =item * Unknown E content in EE<lt>I<CONTENT>E<gt>
 
@@ -297,7 +299,7 @@ The list opened with C<=over> does not contain anything.
 =item * empty section in previous paragraph
 
 The previous section (introduced by a C<=head> command) does not contain
-any text. This usually indicates that something is missing. Note: A
+any valid content. This usually indicates that something is missing. Note: A
 C<=head1> followed immediately by C<=head2> does not trigger this warning.
 
 =item * Verbatim paragraph in NAME section
@@ -336,7 +338,10 @@ these literal characters like this:
 
 =back
 
-Note that the line number of the error/warning is sometimes off by a few.
+Note that the line number of the error/warning may refer to the line number of
+the start of the paragraph in which the error/warning exists, not the line 
+number that the error/warning is on. This bug is present in errors/warnings
+related to formatting codes. I<This should be fixed.>
 
 =head1 RETURN VALUE
 
@@ -694,6 +699,8 @@ sub _close_list { shift @{shift->{'_list_stack'}} }
 sub _check_fcode {
     my ($self, $inner, $outers) = @_;
     # Check for an fcode inside another of the same fcode
+    # XXX line number is the line of the start of the paragraph that the warning
+    # is in, not the line that the warning is on. Fix this
     if ($inner ~~ $outers) {
         $self->poderror({ -line => $self->{'_line'},
                           -severity => 'WARNING',
@@ -701,29 +708,9 @@ sub _check_fcode {
     }
 }
 
-sub _check_angles {
-    my ($self, $text) = @_;
-    return unless $self->{'-warnings'} > 1;
-
-    state $line = '';
-    state $line_num;
-    if ($line eq substr($text, 0, length $line)) {
-        # only check line segments we have not seen yet
-        $line = $text;
-        $line_num = $self->{'_line'}; # note the line we are processing
-    } else {
-        if (my $count = $text =~ tr/<>/<>/) {
-            $self->poderror({ -line => $line_num,
-                              -severity => 'WARNING',
-                              -msg => "$count unescaped <> in paragraph" });
-        }
-        $line = '';
-    }
-}
-
 ##################################
 
-sub handle_text { $_[0]->_check_angles($_[0]{'_thispara'} .= $_[1]) }
+sub handle_text { $_[0]{'_thispara'} .= $_[1] }
 
 # whiteline is a seemingly blank line that matches /[^\S\r\n]/
 sub handle_whiteline {
@@ -752,6 +739,18 @@ sub end_Para   {
     if ($self->{'_head_num'} == 1 && $self->{'_head_text'} eq 'NAME') {
         if ($self->{'_thispara'} =~ /^\s*(\S+?)\s*[,-]/) {
             $self->{'_pod_name'} = $1 unless defined $self->{'_pod_name'};
+        }
+    }
+
+    # check for unescaped '<'/'>'s in Para text
+    # XXX do I need to do this anywhere else?
+    # XXX this warning is triggered when there are invalid fcodes in the PARA
+    #     (e.g., E<> or L<<<< >>>>)
+    if ($self->{'-warnings'} > 1) {
+        if (my $count = $self->{'_thispara'} =~ tr/<>/<>/) {
+            $self->poderror({ -line => $self->{'_line'},
+                              -severity => 'WARNING',
+                              -msg => "$count unescaped <> in paragraph" });
         }
     }
 }
