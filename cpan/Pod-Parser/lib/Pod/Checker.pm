@@ -367,6 +367,12 @@ B<podchecker> (the script). This allows users of B<Pod::Checker> to
 control completely the output behavior. Users of B<podchecker> (the script)
 get the well-known behavior.
 
+# XXX 1.45 or 1.46
+PodChecker-1.45 inherits from Pod::Simple as opposed to all previous versions
+inheriting from Pod::Parser. Do B<not> use Pod::Simple's interface when using
+Pod::Checker unless it is documented somewhere on this page. I repeat, DO
+B<NOT> USE POD::SIMPLE'S INTERFACE.
+
 =cut
 
 #############################################################################
