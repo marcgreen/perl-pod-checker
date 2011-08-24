@@ -988,7 +988,7 @@ sub start_L {
     my $link = Pod::Hyperlink->new($flags->{'raw'});
     foreach my $w ($link->warning()) {
         # It has been decided that the following should not be a warning
-        # so it is skipped
+        # XXX remove in Pod::ParseUtils instead of this workaround
         next if $w =~ /^\(section\) in '.+' deprecated$/;
         $self->poderror({ -line => $self->{'_line'},
                           -severity => 'WARNING',
