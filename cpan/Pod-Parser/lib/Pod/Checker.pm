@@ -869,7 +869,7 @@ sub end_item {
 
     # warn if type is of definition but content starts with digit or '*'
     # the other cases are taken care of in Pod::Simple
-    if ($type eq 'definition' && $self->{'_thispara'} =~ /^([*\d])/) {
+    if ($type eq 'definition' && $self->{'_thispara'} =~ /^([*1-9])\s/) {
         $self->poderror({ -line => $self->{'_line'},
                           -severity => 'WARNING',
                           -msg => "Possible =item type mismatch: '$1' found ".
