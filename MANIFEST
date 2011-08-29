@@ -1961,6 +1961,7 @@ cpan/Pod-Parser/t/pod/pod2usage.t		Test Pod::Usage
 cpan/Pod-Parser/t/pod/pod2usage.xr		Expected results for pod2usage.t
 cpan/Pod-Parser/t/pod/podchkenc.t		Validate =encoding support
 cpan/Pod-Parser/t/pod/podchkenc.xr		Expected results for the above
+cpan/Pod-Parser/t/pod/podchkinter.t		Test Pod::Checker's interface	
 cpan/Pod-Parser/t/pod/poderrs.t			Test POD errors
 cpan/Pod-Parser/t/pod/poderrs.xr		Expected results for poderrs.t
 cpan/Pod-Parser/t/pod/podselect.t		Test Pod::Select
