@@ -808,7 +808,7 @@ sub end_head3 { shift->end_head(@_) }
 sub end_head4 { shift->end_head(@_) }
 sub end_head  {
     my $self = shift;
-    my $arg = $self->{'_head_text'} = $self->{'_thispara'};
+    my $arg = $self->{'_head_text'} = $self->{'_thispara'} =~ s/\s+$//r;
     $self->{'_cmds_since_head'} = 0;
     my $h = $self->{'_head_num'};
     $self->node($arg); # remember this node
