@@ -861,7 +861,7 @@ sub end_item_text   { shift->end_item('definition') }
 sub end_item {
     my $self = shift;
     my $type = shift;
-    if (!$self->{'_thispara'}) {
+    if ($self->{'_thispara'} eq '') {
         $self->poderror({ -line => $self->{'_line'},
                           -severity => 'WARNING',
                           -msg => '=item has no contents' });
