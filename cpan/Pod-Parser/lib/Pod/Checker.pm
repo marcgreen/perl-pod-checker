@@ -994,8 +994,8 @@ sub start_L {
                           -severity => 'WARNING',
                           -msg => $w });
     }
-    $link->page($flags->{'to'});
-    $link->node($flags->{'section'});
+    $link->page($flags->{'to'} or '');
+    $link->node($flags->{'section'} or '');
     $link->line($self->{'_line'});
     $link->type('hyperlink') if $flags->{'type'} eq 'url';
     $self->hyperlink([$self->{'_line'}, $link]); # remember link
