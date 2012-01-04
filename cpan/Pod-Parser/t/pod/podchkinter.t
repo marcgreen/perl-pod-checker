@@ -5,7 +5,7 @@ use 5.14.0;
 use Pod::Checker;
 use Data::Dumper;
 use Test::More;
-BEGIN { plan tests => 104 };
+BEGIN { plan tests => 105 };
 
 my ($infile, $outfile) = ("tempin.tmp", "tempout.tmp"); 
 
@@ -18,10 +18,10 @@ my $pods = [
     {in   => "=head1 h1\n\n=head2 h2\n\n=over\n\n=item i1\n\n=item i2\n\n=back",
      node => [qw/h1 h2 i1 i2/],
     },
-    {in   => "=head1 NAME\n\ncactus - blah\n\nL<l1>L<l2>L<l3L<l4>>",
+    {in   => "=head1 NAME\n\ncactus - blah\n\nL<l1>L<l2>L<l3L<l4>>L<0>",
      node => [qw/NAME/],
      name => "cactus",
-     hlnk => [qw/l1 l2 l3l4 l4/],
+     hlnk => [qw/l1 l2 l3l4 l4 0/],
      warn => 1,
     },
     {in   => 'no pod here',
@@ -75,13 +75,14 @@ while (my ($i, $pod) = each @$pods) {
     # some tests
     is($pc->name(), $name, "name - iter.$i");
 
-    is(length @got_node, length @$node, "length node - iter.$i");
+    is($#got_node, $#$node, "length node - iter.$i");
     is($got_node[$_], $$node[$_], "node $_ - iter.$i") for 0..$#$node;
 
-    is(length @got_idx, length @$idx, "length idx - iter.$i");
+    is($#got_idx, $#$idx, "length idx - iter.$i");
     is($got_idx[$_], $$idx[$_], "idx $_ - iter.$i") for 0..$#$idx;
 
-    is(length @got_hlnk, length @$hlnk, "length hlnk - iter.$i");
+    # XXX test more than just the hlnk text; test node(), etc
+    is($#got_hlnk, $#$hlnk, "length hlnk - iter.$i");
     is($got_hlnk[$_][1]->text(), $$hlnk[$_], "hlnk $_ - iter.$i")
         for 0..$#$hlnk;
 
