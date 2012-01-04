@@ -996,8 +996,11 @@ sub start_L {
                           -severity => 'WARNING',
                           -msg => $w });
     }
-    $link->page($flags->{'to'} or '');
-    $link->node($flags->{'section'} or '');
+    # force stringification of page and node
+    my $page = exists $flags->{'to'} ? "$flags->{'to'}" : '';
+    my $node = exists $flags->{'section'} ? "$flags->{'section'}" : '';
+    $link->page($page);
+    $link->node($node);
     $link->line($self->{'_line'});
     $link->type('hyperlink') if $flags->{'type'} eq 'url';
     $self->hyperlink([$self->{'_line'}, $link]); # remember link
